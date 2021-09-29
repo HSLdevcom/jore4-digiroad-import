@@ -21,9 +21,12 @@ CREATE TABLE :schema.dr_pysakki AS
 SELECT
     src.gid,
     src.link_id,
+    src.valtak_id,
     src.kuntakoodi,
     src.koord_x,
     src.koord_y,
+    src.sijainti_m,
+    src.vaik_suunt,
     src.geom AS geom_orig
 FROM :source_schema.dr_pysakki src;
 
