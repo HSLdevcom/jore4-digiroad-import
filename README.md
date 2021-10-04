@@ -22,6 +22,12 @@ Secondly, Digiroad shapefiles are downloaded and imported into PostGIS database 
 ./import_digiroad_shapefiles.sh
 ```
 
+Export a json file containing infrastructure link data using the jore4 data schema:
+
+```
+./export_infra_network.sh
+```
+
 A pg_dump file containing imported and processed data from shapefiles can be exported with (given that Digiroad material has already been imported):
 
 ```
