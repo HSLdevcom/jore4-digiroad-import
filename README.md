@@ -101,7 +101,20 @@ won't be deleted here.
 ./import_infra_network_csv.sh
 ```
 
+## Exporting Stops for Jore4
+
+If you want to export the stop data as a CSV file, you have to run:
+
+```
+./export_stops_csv.sh
+
+```
+
+This command reads the stop data imported from Digiroad and writes it to the _workdir/csv/digiroad_stops.csv_ file.
+
+
 ## Exporting vector tiles
+=======
 
 An MBTiles files containing road links can be exported with (given that Digiroad
 shapefiles have already been imported):
