@@ -114,7 +114,6 @@ This command reads the stop data imported from Digiroad and writes it to the _wo
 
 
 ## Exporting vector tiles
-=======
 
 An MBTiles files containing road links can be exported with (given that Digiroad
 shapefiles have already been imported):
