@@ -36,17 +36,12 @@ WHERE
       505, -- Mäntsälä
       543, -- Nurmijärvi
       611, -- Pornainen
-      638, -- Porvoo 
+      638, -- Porvoo
       753, -- Sipoo
       755, -- Siuntio
       858, -- Tuusula
       927  -- Vihti
     );
-
-ALTER TABLE :schema.dr_linkki_out
-    ALTER COLUMN link_id TYPE text,
-    ALTER COLUMN tienimi_su TYPE text,
-    ALTER COLUMN tienimi_ru TYPE text;
 
 ALTER TABLE :schema.dr_linkki_out RENAME column gid TO id;
 
