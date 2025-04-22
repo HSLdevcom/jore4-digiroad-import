@@ -7,7 +7,6 @@ FROM :schema.dr_pysakki src
 INNER JOIN :schema.dr_linkki link USING (link_id);
 
 ALTER TABLE :schema.dr_pysakki_out
-    ALTER COLUMN link_id TYPE text,
     ALTER COLUMN valtak_id TYPE int,
     ALTER COLUMN kuntakoodi TYPE int USING kuntakoodi::int,
     ALTER COLUMN vaik_suunt TYPE int,

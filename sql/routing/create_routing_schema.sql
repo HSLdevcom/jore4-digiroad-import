@@ -54,13 +54,13 @@ CREATE TABLE :schema.infrastructure_link AS
 SELECT
     src.id::bigint AS infrastructure_link_id,
     isrc.infrastructure_source_id,
-    src.link_id AS external_link_id,
+    src.link_id::text AS external_link_id,
     dir.traffic_flow_direction_type,
     src.kuntakoodi AS municipality_code,
     src.linkkityyp AS external_link_type,
     src.link_tila AS external_link_state,
-    json_build_object('fi', src.tienimi_su,
-                      'sv', src.tienimi_ru
+    json_build_object('fi', src.tienimi_su::text,
+                      'sv', src.tienimi_ru::text
     )::jsonb AS name,
     ST_Force3D(src.geom) AS geom_3d
 FROM :source_schema.dr_linkki_fixup src
@@ -281,8 +281,8 @@ SELECT
     END AS is_on_direction_of_link_forward_traversal,
     src.sijainti_m AS distance_from_link_start_in_meters,
     src.kuntakoodi AS municipality_code,
-    json_build_object('fi', src.nimi_su,
-                      'sv', src.nimi_ru
+    json_build_object('fi', src.nimi_su::text,
+                      'sv', src.nimi_ru::text
     )::jsonb AS name,
     src.geom
 FROM :source_schema.dr_pysakki_fixup src
