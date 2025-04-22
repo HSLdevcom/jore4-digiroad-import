@@ -16,10 +16,10 @@ jobs:
   test-import-digiroad-export-routing-schema:
     name:
       Verifies that Digiroad shapefiles are successfully downloaded and routing schema exported
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build Docker image
         run: ${{ github.workspace }}/build_docker_image.sh
