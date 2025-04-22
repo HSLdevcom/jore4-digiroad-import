@@ -1,6 +1,6 @@
 FROM postgis/postgis:13-master
 
-ENV TZ Europe/Helsinki
+ENV TZ=Europe/Helsinki
 
 # Install GDAL command line utilities (e.g. ogr2ogr).
 RUN set -ex \
@@ -9,8 +9,9 @@ RUN set -ex \
     gdal-bin \
  && rm -rf /var/lib/apt/lists/*
 
-ENV PGROUTING_VERSION 3.4.1
-ENV PGROUTING_SHA256 a4e034efee8cf67582b67033d9c3ff714a09d8f5425339624879df50aff3f642
+ENV \
+ PGROUTING_VERSION=3.4.1 \
+ PGROUTING_SHA256=a4e034efee8cf67582b67033d9c3ff714a09d8f5425339624879df50aff3f642
 
 # Build and install pgRouting from source.
 RUN set -ex \
@@ -53,8 +54,9 @@ RUN set -ex \
  && apt-get clean -y \
  && rm -rf /var/lib/apt/lists/*
 
-ENV TIPPECANOE_VERSION 1.36.0
-ENV TIPPECANOE_SHA256 0e385d1244a0d836019f64039ea6a34463c3c2f49af35d02c3bf241aec41e71b
+ENV \
+ TIPPECANOE_VERSION=1.36.0 \
+ TIPPECANOE_SHA256=0e385d1244a0d836019f64039ea6a34463c3c2f49af35d02c3bf241aec41e71b
 
 # Build and install tippecanoe from source.
 RUN set -ex \
