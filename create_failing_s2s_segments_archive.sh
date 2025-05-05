@@ -12,4 +12,5 @@ zip -r "${WORK_DIR}/zip/$(date "+%Y-%m-%d")_failing_stop2stop_segments.zip" \
   workdir/shp/UUSIMAA/DR_PYSAKKI* \
   workdir/shp/UUSIMAA/ITA-UUSIMAA/DR_LINKKI* \
   workdir/shp/UUSIMAA/UUSIMAA_1/DR_LINKKI* \
-  workdir/shp/UUSIMAA/UUSIMAA_2/DR_LINKKI*
+  workdir/shp/UUSIMAA/UUSIMAA_2/DR_LINKKI* \
+  workdir/shp/UUSIMAA/UUSIMAA_2/DR_JOUKKOLIIKENNEKAISTA*
