@@ -20,7 +20,8 @@ WHERE
     -- 13, -- Huoltoaukko moottoritiellä
     -- 14, -- Erikoiskuljetusyhteys ilman puomia
     -- 15, -- Erikoiskuljetusyhteys puomilla
-       21  -- Lossi
+       21, -- Lossi
+       99  -- Ei tietoa (esiintyy vain rakenteilla olevilla tielinkeillä)
     )
     -- Filter in municipalities relevant to HSL.
     AND src.kuntakoodi IN (
