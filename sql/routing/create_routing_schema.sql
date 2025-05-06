@@ -218,12 +218,12 @@ CREATE INDEX infrastructure_link_end_node_idx ON :schema.infrastructure_link (en
 UPDATE :schema.infrastructure_link SET geom = ST_Force2D(geom_3d);
 
 -- Create pgRouting topology.
-SELECT pgr_createTopology(:'schema' || '.infrastructure_link', 0.001, 'geom', 'infrastructure_link_id', 'start_node_id', 'end_node_id');
+SELECT pgr_createTopology(:'schema' || '.infrastructure_link', 0.01, 'geom', 'infrastructure_link_id', 'start_node_id', 'end_node_id');
 
 COMMENT ON TABLE :schema.infrastructure_link_vertices_pgr IS
     'Topology nodes created for infrastructure links by pgRougting';
 
-SELECT pgr_analyzeGraph(:'schema' || '.infrastructure_link', 0.001, 'geom', 'infrastructure_link_id', 'start_node_id', 'end_node_id');
+SELECT pgr_analyzeGraph(:'schema' || '.infrastructure_link', 0.01, 'geom', 'infrastructure_link_id', 'start_node_id', 'end_node_id');
 
 -- Set up `cost` and `reverse_cost` parameters for pgRouting functions.
 -- 
