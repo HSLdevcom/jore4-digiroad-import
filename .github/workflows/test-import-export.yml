@@ -41,17 +41,17 @@ jobs:
 
       - name: Verify that routing schema is exported in SQL format
         run: |
-          SQL_FILE=${{ github.workspace }}/workdir/pgdump/digiroad_r_routing_$(date "+%Y-%m-%d").sql
+          SQL_FILE=${{ github.workspace }}/workdir/pgdump/$(date "+%Y-%m-%d")_create_routing_schema_digiroad_r.sql
           [ "$(sed -n 2,2p ${SQL_FILE})" == "-- PostgreSQL database dump" ]
 
       - name: Verify that routing schema is exported in PostgreSQL's custom format
         run: |
-          PGDUMP_FILE=${{ github.workspace }}/workdir/pgdump/digiroad_r_routing_$(date "+%Y-%m-%d").pgdump
+          PGDUMP_FILE=${{ github.workspace }}/workdir/pgdump/$(date "+%Y-%m-%d")_create_routing_schema_digiroad_r.pgdump
           [[ "$(file ${PGDUMP_FILE})" == *"PostgreSQL custom database dump"* ]]
 
       - name: Verify that toc files for PostgreSQL's custom format are created
         run: |
-          PGDUMP_FILE=${{ github.workspace }}/workdir/pgdump/digiroad_r_routing_$(date "+%Y-%m-%d").pgdump
+          PGDUMP_FILE=${{ github.workspace }}/workdir/pgdump/$(date "+%Y-%m-%d")_create_routing_schema_digiroad_r.pgdump
           TOC_FILE_1="${PGDUMP_FILE}.list"
           TOC_FILE_2="${PGDUMP_FILE}.no-enums.links-and-stops.list"
           TOC_FILE_3="${PGDUMP_FILE}.no-enums.only-links.list"
