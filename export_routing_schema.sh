@@ -33,6 +33,19 @@ mkdir -p "${DUMP_DIR}"
 docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres -v ${DUMP_DIR}:/tmp/pgdump $DOCKER_IMAGE \
   sh -c "$PG_DUMP --clean --if-exists --no-owner -f /tmp/pgdump/${SQL_OUTPUT} --schema=${DB_ROUTING_SCHEMA_NAME}"
 
+# Add the license text at the beginning of the plain-language SQL dump, because
+# the data contained in the dump is derived from Digiroad's open data. Add text
+# starting at line 5 so that it doesn't interfere with GitHub workflows, which
+# determine the file type from the first few lines.
+docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres -v ${DUMP_DIR}:/tmp/pgdump $DOCKER_IMAGE \
+  sh -c "\
+sed '5i\
+-- Digiroad data has been licensed with Creative Commons BY 4.0 license by the\\
+-- Finnish Transport Infrastructure Agency:\\
+--  https://vayla.fi/en/transport-network/data/digiroad/data\\
+' /tmp/pgdump/${SQL_OUTPUT} > temp.sql && mv temp.sql /tmp/pgdump/${SQL_OUTPUT}
+"
+
 # Export the entire routing schema (with data) as a dump file in PostgreSQL's
 # custom format. With custom format, the restoration of schema and/or table
 # data items can be selectively filtered and applied by passing a toc list
