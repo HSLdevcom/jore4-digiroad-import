@@ -20,7 +20,7 @@ docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres -v ${CWD}/sql:/tmp/sq
   sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/routing/create_routing_schema.sql -v source_schema=${DB_IMPORT_SCHEMA_NAME} -v schema=${DB_ROUTING_SCHEMA_NAME}"
 
 DUMP_DIR="${WORK_DIR}/pgdump"
-DUMP_FILE_BASENAME="digiroad_r_routing_$(date "+%Y-%m-%d")"
+DUMP_FILE_BASENAME="$(date "+%Y-%m-%d")_create_routing_schema_digiroad_r"
 SQL_OUTPUT="${DUMP_FILE_BASENAME}.sql"
 PGDUMP_OUTPUT="${DUMP_FILE_BASENAME}.pgdump"
 
