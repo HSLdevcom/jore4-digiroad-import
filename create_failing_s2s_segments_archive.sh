@@ -9,6 +9,8 @@ mkdir -p $WORK_DIR/zip
 zip -r "${WORK_DIR}/zip/$(date "+%Y-%m-%d")_failing_stop2stop_segments.zip" \
   fixup/jore4-digiroad-issues.qgz \
   fixup/digiroad/failed_segment* \
+  fixup/digiroad/failed_segment* \
+  fixup/digiroad/stop_differences_gpkg/* \
   workdir/shp/UUSIMAA/DR_PYSAKKI* \
   workdir/shp/UUSIMAA/ITA-UUSIMAA/DR_LINKKI* \
   workdir/shp/UUSIMAA/UUSIMAA_1/DR_LINKKI* \
