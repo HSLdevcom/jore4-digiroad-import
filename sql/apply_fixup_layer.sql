@@ -128,6 +128,7 @@ WITH DATA;
 REFRESH MATERIALIZED VIEW :schema.dr_linkki_fixup;
 
 CREATE INDEX dr_linkki_fixup_geom_idx ON :schema.dr_linkki_fixup USING gist (geom);
+CREATE INDEX dr_linkki_fixup_hsl_infra_source_idx ON :schema.dr_linkki_fixup (hsl_infra_source);
 
 -- 
 -- Determine and compute additional fields for public transport stop points.
