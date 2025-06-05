@@ -19,7 +19,7 @@ ALTER TABLE :schema.fix_layer_link ADD COLUMN internal_id int;
 -- 
 UPDATE :schema.fix_layer_link
 SET link_id     = 'hsl_' || fid,
-    internal_id =  1000000000 + fid;
+    internal_id = 1000000000 + fid;
 
 ALTER TABLE :schema.fix_layer_link
     ALTER COLUMN link_id SET NOT NULL,
