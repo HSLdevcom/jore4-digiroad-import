@@ -18,7 +18,7 @@ ALTER TABLE :schema.fix_layer_link ADD COLUMN internal_id int;
 -- is used e.g. as the internal primary key in JORE4 map-matching service.
 -- 
 UPDATE :schema.fix_layer_link
-SET link_id     = 'hsl_' || fid,
+SET link_id     = 'hsl:' || fid,
     internal_id = 1000000000 + fid;
 
 ALTER TABLE :schema.fix_layer_link
