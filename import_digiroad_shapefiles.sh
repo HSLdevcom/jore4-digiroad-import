@@ -15,18 +15,17 @@ DOWNLOAD_TARGET_FILE="${DOWNLOAD_TARGET_DIR}/${AREA}_R.zip"
 
 # Load zip file containing Digiroad shapefiles if it does not exist.
 if [[ ! -f "$DOWNLOAD_TARGET_FILE" ]]; then
-    mkdir -p "$DOWNLOAD_TARGET_DIR"
-    curl -Lo $DOWNLOAD_TARGET_FILE $SHP_URL
+  mkdir -p "$DOWNLOAD_TARGET_DIR"
+  curl -Lo $DOWNLOAD_TARGET_FILE $SHP_URL
 fi
 
 SUB_AREAS="ITA-UUSIMAA UUSIMAA_1 UUSIMAA_2"
 SHP_FILE_DIR="${WORK_DIR}/shp/${AREA}"
 
-for SUB_AREA in $SUB_AREAS
-do
-    mkdir -p "$SHP_FILE_DIR/${SUB_AREA}"
-    # Extract all shapefiles within sub-area.
-    unzip -u $DOWNLOAD_TARGET_FILE ${SUB_AREA}/* -d $SHP_FILE_DIR
+for SUB_AREA in $SUB_AREAS; do
+  mkdir -p "$SHP_FILE_DIR/${SUB_AREA}"
+  # Extract all shapefiles within sub-area.
+  unzip -u $DOWNLOAD_TARGET_FILE ${SUB_AREA}/* -d $SHP_FILE_DIR
 done
 
 # Extract shapefile for public transport stops (common to all sub-areas of Uusimaa).
@@ -55,18 +54,17 @@ SHP2PGSQL="shp2pgsql -D -i -s 3067 -S -N abort -W $SHP_ENCODING"
 # Load only selected shapefiles into database.
 SUB_AREA_SHP_TYPES="DR_LINKKI DR_KAANTYMISRAJOITUS"
 
-for SUB_AREA_SHP_TYPE in $SUB_AREA_SHP_TYPES
-do
-    # Derive lowercase table name for shape type.
-    TABLE_NAME="${DB_IMPORT_SCHEMA_NAME}.`echo ${SUB_AREA_SHP_TYPE} | awk '{print tolower($0)}'`"
+for SUB_AREA_SHP_TYPE in $SUB_AREA_SHP_TYPES; do
+  # Derive lowercase table name for shape type.
+  TABLE_NAME="${DB_IMPORT_SCHEMA_NAME}.`echo ${SUB_AREA_SHP_TYPE} | awk '{print tolower($0)}'`"
 
-    # Create database table for each shape type.
-    docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres -v ${SHP_FILE_DIR}:/tmp/shp $DOCKER_IMAGE \
-      sh -c "$SHP2PGSQL -p /tmp/shp/${SUB_AREA}/${SUB_AREA_SHP_TYPE}.shp $TABLE_NAME | $PSQL -v ON_ERROR_STOP=1 -q"
+  # Create database table for each shape type.
+  docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres -v ${SHP_FILE_DIR}:/tmp/shp $DOCKER_IMAGE \
+    sh -c "$SHP2PGSQL -p /tmp/shp/${SUB_AREA}/${SUB_AREA_SHP_TYPE}.shp $TABLE_NAME | $PSQL -v ON_ERROR_STOP=1 -q"
 
-    # Populate database table from multiple shapefiles from sub areas.
-    docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres -v ${SHP_FILE_DIR}:/tmp/shp $DOCKER_IMAGE \
-      sh -c "for SUB_AREA in ${SUB_AREAS}; do $SHP2PGSQL -a /tmp/shp/\${SUB_AREA}/${SUB_AREA_SHP_TYPE}.shp $TABLE_NAME | $PSQL -v ON_ERROR_STOP=1; done"
+  # Populate database table from multiple shapefiles from sub areas.
+  docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres -v ${SHP_FILE_DIR}:/tmp/shp $DOCKER_IMAGE \
+    sh -c "for SUB_AREA in ${SUB_AREAS}; do $SHP2PGSQL -a /tmp/shp/\${SUB_AREA}/${SUB_AREA_SHP_TYPE}.shp $TABLE_NAME | $PSQL -v ON_ERROR_STOP=1; done"
 done
 
 # Import "add_links" and "remove_links" layers from GeoPackage fixup file if it exists.
