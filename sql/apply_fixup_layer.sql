@@ -27,24 +27,45 @@ ALTER TABLE :schema.fix_layer_link
 
 CREATE INDEX fix_layer_link_link_id_idx ON :schema.fix_layer_link (link_id);
 
--- 
--- Create link table between tables `dr_linkki` and `fix_layer_link_exclusion_geometry`.
--- 
+--
+-- Create a table for excluding Digiroad links that, for example, have incorrect traffic flow or are
+-- topologically incorrectly modeled. These links are to be replaced by a fix layer link.
+--
 
 DROP TABLE IF EXISTS :schema.fix_layer_link_exclusion;
 
+-- First, select the explicitly marked links intersecting with the given geometries on a separate
+-- GeoPackage layer.
 CREATE TABLE :schema.fix_layer_link_exclusion AS
-SELECT l.link_id, exg.fid AS geometry_fid
+SELECT
+    l.link_id,
+    exg.fid AS geometry_fid
 FROM :schema.fix_layer_link_exclusion_geometry exg
 INNER JOIN :schema.dr_linkki l ON ST_Intersects(l.geom, exg.geom);
 
--- Add data integrity constraints for exclusion geometries.
+-- Second, implicitly select those Digiroad links to be excluded that geometrically correspond to
+-- the links on the fix layer.
+WITH multipolygon AS (
+    -- Collect all fix layer links into a MultiLineString object and transform it to a MultiPolygon
+    -- object by expanding the collected lines by 0.5 meters in all directions.
+    SELECT ST_Buffer(ST_Collect(geom), 0.5) AS geom
+    FROM :schema.fix_layer_link
+)
+INSERT INTO :schema.fix_layer_link_exclusion(link_id)
+SELECT l.link_id
+FROM :schema.dr_linkki l
+INNER JOIN multipolygon ON ST_Covers(multipolygon.geom, l.geom)
+WHERE l.link_id NOT IN (
+    -- Do not re-add Digiroad links that have already been (explicitly) added.
+    SELECT link_id FROM fix_layer_link_exclusion
+);
+
+-- Add data integrity constraints for link exclusion.
 ALTER TABLE :schema.fix_layer_link_exclusion
 
     ALTER COLUMN link_id SET NOT NULL,
-    ALTER COLUMN geometry_fid SET NOT NULL,
 
-    ADD CONSTRAINT fix_layer_link_exclusion_pkey PRIMARY KEY (link_id, geometry_fid),
+    ADD CONSTRAINT fix_layer_link_exclusion_pkey PRIMARY KEY (link_id),
     ADD CONSTRAINT fk_fix_layer_link_exclusion_link_id FOREIGN KEY (link_id) REFERENCES :schema.dr_linkki (link_id),
     ADD CONSTRAINT fk_fix_layer_link_exclusion_geometry_fid FOREIGN KEY (geometry_fid) REFERENCES :schema.fix_layer_link_exclusion_geometry (fid);
 
