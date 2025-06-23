@@ -183,7 +183,7 @@ joint_links AS (
         ST_AddMeasure(
             interp_line.geom,
             0,
-            ST_Length(interp_line.geom)
+            ST_3DLength(interp_line.geom)
         ) AS geom,
         joint_link_ajosuunta AS ajosuunta,
         from_drl.kuntakoodi,
@@ -365,10 +365,10 @@ mml_link_split_substrings AS (
         l.tienimi_su,
         l.tienimi_ru,
         r.link_id AS original_mml_link_id,
-        r.start_fraction * ST_Length(l.geom) AS start_location_m_on_original_link,
+        r.start_fraction * ST_3DLength(l.geom) AS start_location_m_on_original_link,
         r.seq,
         'MML-originated Digiroad link divided into parts so that Digiroad/HSL supplementary links can be topologically connected to the network. Part ' || seq || '/' || total || '.' AS description,
-        ST_AddMeasure(substr.geom_3d, 0, ST_Length(substr.geom_3d)) AS geom
+        ST_AddMeasure(substr.geom_3d, 0, ST_3DLength(substr.geom_3d)) AS geom
     FROM mml_link_split_fraction_ranges r
     INNER JOIN :schema.dr_linkki_fixup l USING (link_id)
     CROSS JOIN LATERAL (
@@ -603,7 +603,7 @@ WITH drp_fix AS (
             fll.start_location_m_on_original_link IS NULL
             OR (
                 drp.sijainti_m >= fll.start_location_m_on_original_link
-                AND drp.sijainti_m < (fll.start_location_m_on_original_link + ST_Length(fll.geom))
+                AND drp.sijainti_m < (fll.start_location_m_on_original_link + ST_3DLength(fll.geom))
             )
         )
 )
