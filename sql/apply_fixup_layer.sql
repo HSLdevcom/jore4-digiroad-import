@@ -1,28 +1,17 @@
--- Add `link_id` attribute whose value is derived from the primary key of GeoPackage layer (`fid`).
-ALTER TABLE :schema.fix_layer_link ADD COLUMN link_id text;
-
 -- Add internal ID for SQL view. Values will be derived from the primary key of GeoPackage layer
 -- (`fid`).
 ALTER TABLE :schema.fix_layer_link ADD COLUMN internal_id int;
 
 -- Force separate ID value spaces for custom fixup links.
 -- 
--- `link_id` attribute is changed to be derived from the `fid` column of GeoPackage (primary key).
--- Hence, there is no need to verify uniqueness separately. However, this might introduce an issue
--- where removing a link (perhaps accidentally) from QGIS layer and recreating it will assign a
--- different `fid` value for the original link. This can cause problems when updating more recent
--- revisions of infrastructure links to JORE4.
--- 
 -- By adding 1_000_000_000 (one US billion) to `internal_id` value it is tried to keep ID spaces for
 -- (1) Digiroad-originated and (2) HSL-custom links apart from each other. Currently, `internal_id`
 -- is used e.g. as the internal primary key in JORE4 map-matching service.
 -- 
 UPDATE :schema.fix_layer_link
-SET link_id     = 'hsl:' || fid,
-    internal_id = 1000000000 + fid;
+SET internal_id = 1000000000 + fid;
 
 ALTER TABLE :schema.fix_layer_link
-    ALTER COLUMN link_id SET NOT NULL,
     ALTER COLUMN internal_id SET NOT NULL;
 
 CREATE INDEX fix_layer_link_link_id_idx ON :schema.fix_layer_link (link_id);
@@ -58,7 +47,8 @@ ALTER TABLE :schema.fix_layer_link_exclusion
 -- tables imported from shapefiles.
 -- 
 -- Custom `hsl_infra_source` column is added with supported values being:
---   "digiroad_r"
+--   "digiroad_r_mml"
+--   "digiroad_r_supplementary"
 --   "hsl_fixup"
 -- 
 -- Boolean-valued columns for supported vehicle modes/types within Jore4 are added.
@@ -81,7 +71,10 @@ SELECT
     silta_alik,
     tienimi_su,
     tienimi_ru,
-    'digiroad_r'::text AS hsl_infra_source,
+    CASE
+        WHEN link_mmlid IS NOT NULL THEN 'digiroad_r_mml'::text
+        ELSE 'digiroad_r_supplementary'::text
+    END AS hsl_infra_source,
     true AS is_generic_bus,
     -- TODO: Assign "tall electric bus" vehicle type based on greatest allowed height property.
     false AS is_tall_electric_bus,
