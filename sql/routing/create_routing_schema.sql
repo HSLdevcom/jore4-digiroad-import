@@ -44,9 +44,9 @@ COMMENT ON COLUMN :schema.infrastructure_source.infrastructure_source_id IS
 COMMENT ON COLUMN :schema.infrastructure_source.infrastructure_source_name IS
     'The short name for the infrastructure element source';
 INSERT INTO :schema.infrastructure_source (infrastructure_source_id, infrastructure_source_name, description) VALUES
-    (1, 'digiroad_r', 'Digiroad R export made available by Finnish Transport Infrastructure Agency (https://vayla.fi)');
-INSERT INTO :schema.infrastructure_source (infrastructure_source_id, infrastructure_source_name, description) VALUES
-    (2, 'hsl_fixup', 'HSL additions on top of Digiroad infrastructure network');
+    (1, 'digiroad_r_mml', 'Infrastructure links from the MML Maastotietokanta. The data is from the Digiroad R export and has been made available by Finnish Transport Infrastructure Agency (https://vayla.fi)'),
+    (2, 'digiroad_r_supplementary', 'Digiroad''s supplementary infrastructure links. The data is from the Digiroad R export and has been made available by Finnish Transport Infrastructure Agency (https://vayla.fi)'),
+    (100, 'hsl_fixup', 'HSL''s infrastructure link and stop point customisations on top of Digiroad infrastructure network');
 
 --
 -- Import infrastructure links

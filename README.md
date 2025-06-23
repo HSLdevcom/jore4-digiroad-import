@@ -69,7 +69,7 @@ maintained in the daily operational use of JORE4 "ecosystem".
 
 | QGIS layer        | Description |
 | ----------------- | ----------- |
-| `add_links`       | Contains data for HSL-specific infrastructure links to be added on top of or to replace existing Digiroad links (the latter case in tandem with `remove_link` layer). A `LINESTRING` geometry is a mandatory part of each link to be added. All the geometries defined on this layer must seamlessly join to each other and/or existing Digiroad links. Seamlessness can be achieved by using the _Snapping Tool_ in QGIS while drawing line features. |
+| `add_links`       | Contains data about HSL supplementary infrastructure links that are added on top of or to replace existing Digiroad links. The `LINESTRING` geometry is a mandatory part of each added link. All geometries defined in this layer must be seamlessly connected to each other and/or existing Digiroad links. Seamlessness (or topological integrity) can be achieved by using the QGIS _Snapping Tool_ when drawing line features. |
 | `remove_links`    | Contains geometries that are used to mark intersecting Digiroad links for removal. The links marked for removal will be filtered out when exporting data in later stages. The Digiroad public transport stops along the links marked for removal are also filtered out in data exports. It is recommended to use `LINESTRING` type in intersection geometries but currently this is not strictly required. |
 | `add_stop_points` | Contains data for HSL-defined public transport stop points that are mainly used to replace the ones available in Digiroad. A `POINT` geometry is a mandatory part of each stop point to be added as well as `valtak_id` attribute that denotes so called _ELY number_. The closest infrastructure link to each stop point and other information is resolved automatically during import process. |
 
@@ -80,13 +80,15 @@ project. The data types are as they appear in the GeoPackage format (SQLite).
 
 | Column name            | Data type  | Not null | Description |
 | ---------------------- | ---------- | -------- | ----------- |
-| `fid`                  | INTEGER    | X        | The primary key generated internally in GeoPackage. The integer value is used to derive `LINK_ID` attribute within processing of data. |
+| `fid`                  | INTEGER    | X        | The primary key generated internally in GeoPackage. |
 | `geom`                 | LINESTRING | X        | The `LINESTRING` geometry describing the shape of this infrastructure link |
 | `kuntakoodi`           | MEDIUMINT  | -        | Official Finnish municipality code |
 | `linkkityyp`           | MEDIUMINT  | -        | The link type as code value from the corresponding Digiroad code set |
 | `ajosuunta`            | MEDIUMINT  | X        | The direction of traffic flow as code value from the corresponding Digiroad code set |
 | `silta_alik`           | MEDIUMINT  | -        | Is this infrastructure link a bridge, tunnel or underpass? The value must be selected from the corresponding Digiroad code set. |
 | `link_tila`            | MEDIUMINT  | -        | The state of infrastructure link in case it is not yet ready for traffic. The value must be selected from the corresponding Digiroad code set. |
+| `link_id`              | TEXT       | X        | The Digiroad ID of infrastructure link. In the case of HSL supplementary links, the prefix `hsl:` is used to prevent collisions with identifiers in the Digiroad link ID space. |
+| `original_link_id`     | TEXT       | -        | `NULL` for original Digiroad links. If a Digiroad link is replaced with an HSL supplementary link, this contains the ID of the original Digiroad link. It should be given at least in the case when HSL's supplementary links are created programmatically. |
 | `tienimi_su`           | TEXT       | -        | The name of infrastructure link in Finnish |
 | `tienimi_ru`           | TEXT       | -        | The name of infrastructure link in Swedish |
 | `is_generic_bus`       | BOOLEAN    | -        | Is this infrastructure link safely traversable by _generic_bus_ vehicle type? |
@@ -95,6 +97,7 @@ project. The data types are as they appear in the GeoPackage format (SQLite).
 | `is_train`             | BOOLEAN    | -        | Is this infrastructure link traversable by train? |
 | `is_metro`             | BOOLEAN    | -        | Is this infrastructure link traversable by metro? |
 | `is_ferry`             | BOOLEAN    | -        | Is this infrastructure link traversable by ferry? |
+| `description`          | TEXT       | -        | Description text provided by the author in the case of a supplementary link from HSL. |
 
 ### GeoPackage _remove_links_ layer contents
 
