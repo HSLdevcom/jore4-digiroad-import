@@ -143,6 +143,9 @@ drl_fix AS (
             ),
             -- E2180-E2014, E2196-E2180
             ('44d535a1-901e-44a5-9d30-b1cf1d242a8e:1', 'c60da352-e00f-4b86-8e1f-177a2af5e909:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[]),
+            -- E4043-E4037, E4043-E4038, E4043-E4045
+            -- * !!! Requires a linkkityyp of value 8
+            ('85a74090-a925-493e-98af-600a0514c988:1', '9d158c71-e75b-46a8-a7c1-01fdd1eb35b3:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[]),
             -- E4258-E4931
             ('d18af8a7-6d4e-4237-8843-8cde8a44e5ec:1', 'cdb8591b-68d7-4d44-947b-3540abfee994:1', 4, 'start', NULL::text, ARRAY[]::geometry(Point)[]),
             -- E4417-E3157, E4418-E3157
@@ -174,6 +177,21 @@ drl_fix AS (
             ('7c985dfd-e37f-47ed-b564-569994464215:1', 'a935dcb1-9fda-4d2c-a2af-6871c2c1ec4b:1', 4, 'end', 'SRID=3067;POINT(385892.7 6672193.2)', ARRAY[]::geometry(Point)[]),
             -- H4716-H4161
             ('d7a34688-52d5-40b6-aeaa-915602fb4ba7:1', '9cbe8c14-4ad8-4435-b918-31b4d339e55e:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[]),
+            -- Ka1703-Ka1730, Ka1706-Ka1730, Ka1730-Ka1704, Ka1730-Ka1705, Ka1732-Ka1704, Ka1781-Ka1705 #1
+            -- * !!! Requires a linkkityyp of value 8
+            ('ba1a3173-532a-48c7-ad41-4e9e32f1be71:1', 'b1ea93b0-c50b-459f-9c4f-90eb5e0238a2:1', 2, 'start', NULL::text, ARRAY[]::geometry(Point)[]),
+            -- Ka1703-Ka1730, Ka1706-Ka1730, Ka1730-Ka1704, Ka1730-Ka1705, Ka1732-Ka1704, Ka1781-Ka1705 #2
+            -- * !!! Requires a linkkityyp of value 8
+            (
+                'ba1a3173-532a-48c7-ad41-4e9e32f1be71:1',
+                '44dc1e56-79fb-452b-b35c-7ccb2b17b8aa:1',
+                2,
+                'start',
+                'SRID=3067;POINT(374484.6 6677247.9)',
+                ARRAY[
+                    ST_GeomFromEWKT('SRID=3067;POINT(374489.6 6677207.4)')
+                ]
+            ),
             -- Mä8000-Mä8052
             ('b88ca87e-59c0-4a21-9a56-6e5db65e2519:1', 'd7120fe2-8a7e-4cdc-8b26-ed8c20276bc0:2', 2, 'start', NULL::text, ARRAY[]::geometry(Point)[]),
             -- V1560-V1506, V1560-V1521, V1561-V1521, V1567-V1521
@@ -393,6 +411,27 @@ mml_link_split_fractions AS (
     ) junctions
     WHERE
         link_mml.hsl_infra_source = 'digiroad_r_mml'
+
+        AND link_mml.linkkityyp IN (
+                1, -- Moottoritien osa
+                2, -- Moniajorataisen tien osa, joka ei ole moottoritie
+                3, -- Yksiajorataisen tien osa
+                4, -- Moottoriliikennetien osa
+                5, -- Kiertoliittymän osa
+                6, -- Ramppi
+                7, -- Levähdysalue
+            --  8, -- Pyörätie tai yhdistetty pyörätie ja jalkakäytävä
+            --  9, -- Jalankulkualueen osa, esim. kävelykatu tai jalkakäytävä
+            -- 10, -- Huolto- tai pelastustien osa
+               11, -- Liitännäisliikennealueen osa
+               12, -- Ajopolku, maastoajoneuvolla ajettavissa olevat tiet
+            -- 13, -- Huoltoaukko moottoritiellä
+            -- 14, -- Erikoiskuljetusyhteys ilman puomia
+            -- 15, -- Erikoiskuljetusyhteys puomilla
+               21, -- Lossi
+               99  -- Ei tietoa (esiintyy vain rakenteilla olevilla tielinkeillä)
+        )
+
         AND link_supp.hsl_infra_source <> 'digiroad_r_mml'
 
         AND
@@ -413,6 +452,26 @@ mml_link_split_fractions AS (
                 AND
                 ST_EndPoint(link_supp.geom) <-> ST_EndPoint(link_mml.geom) > 0.5
             )
+        )
+
+        AND link_supp.linkkityyp IN (
+                1, -- Moottoritien osa
+                2, -- Moniajorataisen tien osa, joka ei ole moottoritie
+                3, -- Yksiajorataisen tien osa
+                4, -- Moottoriliikennetien osa
+                5, -- Kiertoliittymän osa
+                6, -- Ramppi
+                7, -- Levähdysalue
+            --  8, -- Pyörätie tai yhdistetty pyörätie ja jalkakäytävä
+            --  9, -- Jalankulkualueen osa, esim. kävelykatu tai jalkakäytävä
+            -- 10, -- Huolto- tai pelastustien osa
+               11, -- Liitännäisliikennealueen osa
+               12, -- Ajopolku, maastoajoneuvolla ajettavissa olevat tiet
+            -- 13, -- Huoltoaukko moottoritiellä
+            -- 14, -- Erikoiskuljetusyhteys ilman puomia
+            -- 15, -- Erikoiskuljetusyhteys puomilla
+               21, -- Lossi
+               99  -- Ei tietoa (esiintyy vain rakenteilla olevilla tielinkeillä)
         )
     GROUP BY link_mml.link_id
 ),
@@ -566,6 +625,14 @@ drl_fix AS (
         t.ajosuunta,
         drl.ajosuunta AS original_ajosuunta,
         CASE
+            WHEN t.linkkityyp_override IS NOT NULL THEN t.linkkityyp_override
+            WHEN drl.linkkityyp = 8 THEN 99
+            ELSE drl.linkkityyp
+        END AS linkkityyp,
+        drl.linkkityyp AS original_linkkityyp,
+        CASE
+            WHEN t.linkkityyp_override IS NOT NULL OR drl.linkkityyp = 8
+                THEN 'Correct link type suitable for bus traffic.'
             WHEN t.ajosuunta = 2 AND drl.ajosuunta <> 2
                 THEN 'Change one-way link to bidirectional.'
             WHEN t.ajosuunta <> 2 AND drl.ajosuunta = 2
@@ -574,25 +641,27 @@ drl_fix AS (
         END AS description
     FROM (
         VALUES
-            ('9b0bf1ed-05ce-4abc-9615-9c235695c411:1', 2), -- E6157-E6154 #1
-            ('3e30342b-d503-4363-8677-ca41dc8117f2:1', 2), -- E6157-E6154 #2
-            ('090a7323-cd39-406a-8936-74ec353c7a35:1', 2), -- E6157-E6154 #3
-            ('d158f0c6-908c-4583-b6f8-5f26777f40a0:1', 2), -- E6157-E6154 #4
-            ('b6fa3249-ac65-4d5a-93d2-14c9b7546a9d:1', 2), -- H1215-H1273 #1
-            ('fb11285c-eac2-4e17-a59c-afb9066b45b1:1', 2), -- H1215-H1273 #2
-            ('e83faae9-0af1-4e94-a2de-76c7584f1155:1', 2), -- H1215-H1273 #3
-            ('29a09932-0025-4e22-ada2-7b09f0ce9e72:1', 2), -- H1224-H1254, H1273-H1232
-            ('52feba80-36b0-4de2-8a16-c0553ab84521:1', 2), -- H1648-H1646, H1648-H1665, H1740-H1665
-            ('c6877c6b-1a4d-444a-a1e5-9d956a1903df:1', 4), -- H2061-H2520, H2061-H2521 #1
-            ('b64c424c-2cb0-41e5-aec3-264b36a2e00c:1', 4), -- H2061-H2520, H2061-H2521 #2
-            ('0014f0ad-10de-43df-84d3-2252d85f69b7:2', 2), -- H3254-H3256, H3254-H3258, H3458-H3256
-            ('387891de-7a31-48c0-ac4f-8f4148827932:1', 2), -- H3466-H3241
-            ('276e86a6-2380-4bb7-8f73-cbbe360925dc:1', 3), -- Järvenpää terminal (e.g. Jä2118-Jä2121)
-            ('b88ca87e-59c0-4a21-9a56-6e5db65e2519:1', 2), -- Mä8000-Mä8052
-            ('84ea4463-e7b2-455c-8cc7-c600ebddc9ee:1', 2), -- V6429-V6431 #1
-            ('a8c0e727-e0fb-4aaf-8dbc-19ea2e74af70:1', 2), -- V6429-V6431 #2
-            ('7423375d-81d6-437e-8e70-b95a96ac7b07:1', 2)  -- V6429-V6431 #3
-    ) AS t(link_id, ajosuunta)
+            ('410f5711-d069-4ec0-af9a-d536a090ec1e:1', 2, NULL), -- E2045-E2047
+            ('85a74090-a925-493e-98af-600a0514c988:1', 2, 3),    -- E4043-E4037, E4043-E4038, E4043-E4045
+            ('9b0bf1ed-05ce-4abc-9615-9c235695c411:1', 2, NULL), -- E6157-E6154 #1
+            ('3e30342b-d503-4363-8677-ca41dc8117f2:1', 2, NULL), -- E6157-E6154 #2
+            ('090a7323-cd39-406a-8936-74ec353c7a35:1', 2, NULL), -- E6157-E6154 #3
+            ('d158f0c6-908c-4583-b6f8-5f26777f40a0:1', 2, NULL), -- E6157-E6154 #4
+            ('b6fa3249-ac65-4d5a-93d2-14c9b7546a9d:1', 2, NULL), -- H1215-H1273 #1
+            ('fb11285c-eac2-4e17-a59c-afb9066b45b1:1', 2, NULL), -- H1215-H1273 #2
+            ('e83faae9-0af1-4e94-a2de-76c7584f1155:1', 2, NULL), -- H1215-H1273 #3
+            ('29a09932-0025-4e22-ada2-7b09f0ce9e72:1', 2, NULL), -- H1224-H1254, H1273-H1232
+            ('52feba80-36b0-4de2-8a16-c0553ab84521:1', 2, NULL), -- H1648-H1646, H1648-H1665, H1740-H1665
+            ('c6877c6b-1a4d-444a-a1e5-9d956a1903df:1', 4, NULL), -- H2061-H2520, H2061-H2521 #1
+            ('b64c424c-2cb0-41e5-aec3-264b36a2e00c:1', 4, NULL), -- H2061-H2520, H2061-H2521 #2
+            ('0014f0ad-10de-43df-84d3-2252d85f69b7:2', 2, NULL), -- H3254-H3256, H3254-H3258, H3458-H3256
+            ('387891de-7a31-48c0-ac4f-8f4148827932:1', 2, NULL), -- H3466-H3241
+            ('276e86a6-2380-4bb7-8f73-cbbe360925dc:1', 3, NULL), -- Järvenpää terminal (e.g. Jä2118-Jä2121)
+            ('b88ca87e-59c0-4a21-9a56-6e5db65e2519:1', 2, NULL), -- Mä8000-Mä8052
+            ('84ea4463-e7b2-455c-8cc7-c600ebddc9ee:1', 2, NULL), -- V6429-V6431 #1
+            ('a8c0e727-e0fb-4aaf-8dbc-19ea2e74af70:1', 2, NULL), -- V6429-V6431 #2
+            ('7423375d-81d6-437e-8e70-b95a96ac7b07:1', 2, NULL)  -- V6429-V6431 #3
+    ) AS t(link_id, ajosuunta, linkkityyp_override)
 
     -- Filter out links already corrected in the fix_layer_link table or the
     -- links that are possibly fixed in the future Digiroad data release.
@@ -616,7 +685,9 @@ drl_fix AS (
         1000000000 + generated_fid.n AS internal_id,
         drl.link_id AS original_link_id,
         drl_fix.ajosuunta,
-        kuntakoodi, linkkityyp, silta_alik, link_tila,
+        kuntakoodi,
+        drl_fix.linkkityyp,
+        silta_alik, link_tila,
         tienimi_su, tienimi_ru,
         true AS is_generic_bus,
         true AS is_tall_electric_bus,

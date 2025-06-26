@@ -9,7 +9,27 @@ SELECT
     src.id,
     src.link_id,
     src.geom AS geom_orig
-FROM :source_schema.dr_linkki_fixup src;
+FROM :source_schema.dr_linkki_fixup src
+WHERE
+    src.linkkityyp IN (
+        1, -- Moottoritien osa
+        2, -- Moniajorataisen tien osa, joka ei ole moottoritie
+        3, -- Yksiajorataisen tien osa
+        4, -- Moottoriliikennetien osa
+        5, -- Kiertoliittymän osa
+        6, -- Ramppi
+        7, -- Levähdysalue
+    --  8, -- Pyörätie tai yhdistetty pyörätie ja jalkakäytävä
+    --  9, -- Jalankulkualueen osa, esim. kävelykatu tai jalkakäytävä
+    -- 10, -- Huolto- tai pelastustien osa
+       11, -- Liitännäisliikennealueen osa
+       12, -- Ajopolku, maastoajoneuvolla ajettavissa olevat tiet
+    -- 13, -- Huoltoaukko moottoritiellä
+    -- 14, -- Erikoiskuljetusyhteys ilman puomia
+    -- 15, -- Erikoiskuljetusyhteys puomilla
+       21, -- Lossi
+       99  -- Ei tietoa (esiintyy vain rakenteilla olevilla tielinkeillä)
+    );
 
 -- Apply geometry conversion for dr_linkki table that is suitable for MVT format.
 SELECT AddGeometryColumn(:'schema', 'dr_linkki', 'geom', 4326, 'LINESTRING', 2);
@@ -25,7 +45,8 @@ SELECT
     src.link_id,
     src.kuntakoodi,
     src.geom AS geom_orig
-FROM :source_schema.dr_pysakki_fixup src;
+FROM :source_schema.dr_pysakki_fixup src
+INNER JOIN :schema.dr_linkki link USING (link_id);
 
 -- Apply geometry conversion for dr_pysakki table that is suitable for MVT format.
 SELECT AddGeometryColumn(:'schema', 'dr_pysakki', 'geom', 4326, 'POINT', 2);
