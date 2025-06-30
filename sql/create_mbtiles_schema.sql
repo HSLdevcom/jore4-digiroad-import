@@ -2,6 +2,8 @@ DROP SCHEMA IF EXISTS :schema CASCADE;
 
 CREATE SCHEMA :schema;
 
+REFRESH MATERIALIZED VIEW :source_schema.dr_linkki_fixup;
+
 CREATE TABLE :schema.dr_linkki AS
 SELECT
     src.id,
