@@ -1,3 +1,5 @@
+REFRESH MATERIALIZED VIEW :schema.dr_linkki_fixup;
+
 COPY (
     SELECT
         source.link_id as external_link_id,

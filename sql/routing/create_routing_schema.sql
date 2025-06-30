@@ -2,6 +2,8 @@ DROP SCHEMA IF EXISTS :schema CASCADE;
 
 CREATE SCHEMA :schema;
 
+REFRESH MATERIALIZED VIEW :source_schema.dr_linkki_fixup;
+
 --
 -- Create table and populate data for direction of traffic flow enumeration
 --
