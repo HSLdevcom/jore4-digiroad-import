@@ -15,7 +15,13 @@ docker exec "${DOCKER_CONTAINER_NAME}" sh -c "$PG_WAIT_LOCAL"
 # Export CSV file to output directory.
 OUTPUT_FILENAME="infra_network_digiroad.csv"
 OUTPUT_FOLDER="${WORK_DIR}/csv"
-mkdir -p "${OUTPUT_FOLDER}"
+
+mkdir -p "$OUTPUT_FOLDER"
+
+# Make sure infrastructure links are updated.
+docker exec "$DOCKER_CONTAINER_NAME" sh -c \
+  "$PSQL -nt -c \"REFRESH MATERIALIZED VIEW ${DB_IMPORT_SCHEMA_NAME}.dr_linkki_fixup;\""
+
 docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres -v ${CWD}/sql:/tmp/sql -v ${OUTPUT_FOLDER}:/tmp/csv ${DOCKER_IMAGE} \
   sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/select_infra_links_as_csv.sql -v schema=${DB_IMPORT_SCHEMA_NAME} -o /tmp/csv/${OUTPUT_FILENAME}"
 

@@ -35,7 +35,7 @@ CREATE INDEX fix_layer_link_geom_idx ON :schema.fix_layer_link USING gist(geom);
 
 DROP TABLE IF EXISTS :schema.fix_layer_link_exclusion;
 
--- First, select the explicitly marked links intersecting with the given geometries on a separate
+-- Select the explicitly marked links intersecting with the given geometries on a separate
 -- GeoPackage layer.
 CREATE TABLE :schema.fix_layer_link_exclusion AS
 SELECT
@@ -43,23 +43,6 @@ SELECT
     exg.fid AS geometry_fid
 FROM :schema.fix_layer_link_exclusion_geometry exg
 INNER JOIN :schema.dr_linkki l ON ST_Intersects(l.geom, exg.geom);
-
--- Second, implicitly select those Digiroad links to be excluded that geometrically correspond to
--- the links on the fix layer.
-WITH multipolygon AS (
-    -- Collect all fix layer links into a MultiLineString object and transform it to a MultiPolygon
-    -- object by expanding the collected lines by 0.5 meters in all directions.
-    SELECT ST_Buffer(ST_Collect(geom), 0.5) AS geom
-    FROM :schema.fix_layer_link
-)
-INSERT INTO :schema.fix_layer_link_exclusion(link_id)
-SELECT l.link_id
-FROM :schema.dr_linkki l
-INNER JOIN multipolygon ON ST_Covers(multipolygon.geom, l.geom)
-WHERE l.link_id NOT IN (
-    -- Do not re-add Digiroad links that have already been (explicitly) added.
-    SELECT link_id FROM fix_layer_link_exclusion
-);
 
 -- Add data integrity constraints for link exclusion.
 ALTER TABLE :schema.fix_layer_link_exclusion
@@ -81,7 +64,13 @@ ALTER TABLE :schema.fix_layer_link_exclusion
 -- Boolean-valued columns for supported vehicle modes/types within Jore4 are added.
 -- 
 
-CREATE VIEW :schema.dr_linkki_fixup AS
+CREATE MATERIALIZED VIEW :schema.dr_linkki_fixup AS
+WITH exclusion_multipolygon AS (
+    -- Collect all fix layer links into a MultiLineString object and transform it to a MultiPolygon
+    -- object by expanding the collected lines by 0.5 meters in all directions.
+    SELECT ST_Buffer(ST_Collect(geom), 0.5) AS geom
+    FROM :schema.fix_layer_link
+)
 SELECT
     id,
     link_id,
@@ -100,13 +89,16 @@ SELECT
     false AS is_train,
     false AS is_metro,
     linkkityyp = 21 AS is_ferry,
-    geom
+    l.geom
 FROM :schema.dr_linkki l
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM :schema.fix_layer_link_exclusion ex
-    WHERE ex.link_id = l.link_id
-)
+LEFT JOIN exclusion_multipolygon exc_pol ON ST_Covers(exc_pol.geom, l.geom)
+WHERE
+    exc_pol.geom IS NULL -- anti-join
+    AND NOT EXISTS (
+        SELECT 1
+        FROM :schema.fix_layer_link_exclusion ex
+        WHERE ex.link_id = l.link_id
+    )
 UNION
 SELECT
     internal_id AS id,
@@ -136,7 +128,10 @@ WHERE
         SELECT 1
         FROM :schema.dr_linkki l
         WHERE l.id = fl.internal_id
-    );
+    )
+WITH DATA;
+
+CREATE INDEX dr_linkki_fixup_geom_idx ON :schema.dr_linkki_fixup USING gist (geom);
 
 -- 
 -- Determine and compute additional fields for public transport stop points.
