@@ -26,6 +26,7 @@ ALTER TABLE :schema.fix_layer_link
     ALTER COLUMN internal_id SET NOT NULL;
 
 CREATE INDEX fix_layer_link_link_id_idx ON :schema.fix_layer_link (link_id);
+CREATE INDEX fix_layer_link_geom_idx ON :schema.fix_layer_link USING gist(geom);
 
 --
 -- Create a table for excluding Digiroad links that, for example, have incorrect traffic flow or are
@@ -146,6 +147,7 @@ ALTER TABLE :schema.fix_layer_stop_point
     ADD COLUMN kuntakoodi int;
 
 CREATE INDEX fix_layer_stop_point_link_id_idx ON :schema.fix_layer_stop_point (link_id);
+CREATE INDEX fix_layer_stop_point_geom_idx ON :schema.fix_layer_stop_point USING gist(geom);
 
 -- `internal_id` is for SQL view in order to distinguish custom HSL-defined stop
 -- points from ones defined in Digiroad. ID value will be derived from the
