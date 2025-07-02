@@ -51,6 +51,8 @@ SELECT fid, ST_AsEWKT(geom) AS geom_ewkt, false AS is_new FROM updates
 ORDER BY fid;
 
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA :schema;
+
 -- Commented out because these columns are currently added to fixup.gpkg
 -- ALTER TABLE :schema.fix_layer_link ADD COLUMN original_link_id text;
 -- ALTER TABLE :schema.fix_layer_link ADD COLUMN description text;
@@ -308,7 +310,7 @@ INSERT INTO :schema.fix_layer_link (
 )
 SELECT
     generated_fid.n AS fid,
-    'hsl:' || generated_fid.n AS link_id,
+    'hsl:' || gen_random_uuid() || ':1' AS link_id,
     1000000000 + generated_fid.n AS internal_id,
     joint_links.ajosuunta,
     joint_links.kuntakoodi,
@@ -498,7 +500,7 @@ INSERT INTO :schema.fix_layer_link (
 )
 SELECT
     generated_fid AS fid,
-    'hsl:' || generated_fid AS link_id,
+    'hsl:' || gen_random_uuid() || ':1' AS link_id,
     1000000000 + generated_fid AS internal_id,
     original_mml_link_id,
     start_location_m_on_original_link,
@@ -576,7 +578,7 @@ drl_fix AS (
 , new_links AS (
     SELECT
         generated_fid.n AS fid,
-        'hsl:' || generated_fid.n AS link_id,
+        'hsl:' || drl.link_id AS link_id,
         1000000000 + generated_fid.n AS internal_id,
         drl.link_id AS original_link_id,
         drl_fix.ajosuunta,
