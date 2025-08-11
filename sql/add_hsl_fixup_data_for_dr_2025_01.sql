@@ -21,7 +21,11 @@ drl_fix AS (
         VALUES
             -- Exclude two links of which one is a duplicate and another is
             -- fixed for the `ajosuunta` property.
-            (1, 'SRID=3067;LINESTRING(385272.0 6672146.0 0 0, 385291.0 6672159.0 0 0)') -- Viikki
+            (1, 'SRID=3067;LINESTRING(385272.0 6672146.0 0 0, 385291.0 6672159.0 0 0)'), -- Viikki
+
+            -- Make more accurate geometry for an existing Digiroad link and add
+            -- two tram trails next to it.
+            (2, 'SRID=3067;LINESTRING(386431.8 6673623.4 0 0, 386433.9 6673625.9 0 0)')  -- Viides linja (Karhupuisto)
     ) AS t(fid, geom_ewkt)
 ),
 inserts AS (
@@ -74,11 +78,12 @@ drl_fix AS (
         joint_link_ajosuunta,
         from_link_terminus_opt,
         closest_point_ewkt_on_to_link_opt,
-        interim_points_arr
+        interim_points_arr,
+        is_tram
     FROM (
         VALUES
             -- E1970-E1146
-            ('a9302c4c-2811-4bb5-8682-996859b824a8:1', 'e79d9285-97e3-420f-b5b4-a035ddb8a237:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[]),
+            ('a9302c4c-2811-4bb5-8682-996859b824a8:1', 'e79d9285-97e3-420f-b5b4-a035ddb8a237:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[], false),
             -- E2002-E2104
             (
                 '87bf3b53-a499-4f2e-a177-637050f84c1b:1',
@@ -94,7 +99,8 @@ drl_fix AS (
                     ST_GeomFromEWKT('SRID=3067;POINT(377735.1 6673361.6)'),
                     ST_GeomFromEWKT('SRID=3067;POINT(377739.2 6673354.9)'),
                     ST_GeomFromEWKT('SRID=3067;POINT(377756.1 6673338.4)')
-                ]
+                ],
+                false
             ),
             -- E2004-E2005, E2019-E2004, E2028-E2190
             (
@@ -110,7 +116,8 @@ drl_fix AS (
                     ST_GeomFromEWKT('SRID=3067;POINT(378408.9 6673279.7)'),
                     ST_GeomFromEWKT('SRID=3067;POINT(378413.9 6673278.5)'),
                     ST_GeomFromEWKT('SRID=3067;POINT(378455.3 6673287.6)')
-                ]
+                ],
+                false
             ),
             -- Kulttuuriaukio: E2002-E2104, E2002-2108, E2105-E2002, E2108-E2002
             (
@@ -124,15 +131,16 @@ drl_fix AS (
                     ST_GeomFromEWKT('SRID=3067;POINT(378168.1 6673229.6)'),
                     ST_GeomFromEWKT('SRID=3067;POINT(378167.8 6673236.6)'),
                     ST_GeomFromEWKT('SRID=3067;POINT(378162.8 6673237.8)')
-                ]
+                ],
+                false
             ),
             -- E2180-E2014, E2196-E2180
-            ('44d535a1-901e-44a5-9d30-b1cf1d242a8e:1', 'c60da352-e00f-4b86-8e1f-177a2af5e909:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[]),
+            ('44d535a1-901e-44a5-9d30-b1cf1d242a8e:1', 'c60da352-e00f-4b86-8e1f-177a2af5e909:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[], false),
             -- E4043-E4037, E4043-E4038, E4043-E4045
             -- * !!! Requires a linkkityyp of value 8
-            ('85a74090-a925-493e-98af-600a0514c988:1', '9d158c71-e75b-46a8-a7c1-01fdd1eb35b3:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[]),
+            ('85a74090-a925-493e-98af-600a0514c988:1', '9d158c71-e75b-46a8-a7c1-01fdd1eb35b3:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[], false),
             -- E4258-E4931
-            ('d18af8a7-6d4e-4237-8843-8cde8a44e5ec:1', 'cdb8591b-68d7-4d44-947b-3540abfee994:1', 4, 'start', NULL::text, ARRAY[]::geometry(Point)[]),
+            ('d18af8a7-6d4e-4237-8843-8cde8a44e5ec:1', 'cdb8591b-68d7-4d44-947b-3540abfee994:1', 4, 'start', NULL::text, ARRAY[]::geometry(Point)[], false),
             -- E4417-E3157, E4418-E3157
             (
                 'a38b6c59-6c3b-49b3-92b9-5bd00199455a:1',
@@ -143,7 +151,56 @@ drl_fix AS (
                 ARRAY[
                     ST_GeomFromEWKT('SRID=3067;POINT(374319.1 6671679.5)'),
                     ST_GeomFromEWKT('SRID=3067;POINT(374285.9 6671674.6)')
-                ]
+                ],
+                false
+            ),
+            -- Viides linja
+            (
+                '7c8ba8ec-fe5d-4ec0-8b5b-c55ed52242fb:1',
+                '6cfdc892-3cc0-45d5-a8d1-dbcc2f401528:1',
+                3,
+                'end',
+                NULL::text,
+                ARRAY[
+                    ST_GeomFromEWKT('SRID=3067;POINT(386470.8 6673589.6)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386461.2 6673596.4)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386421.9 6673628.6)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386414.0 6673635.5)')
+                ],
+                false
+            ),
+            -- H0255-H0257
+            (
+                'fd260f4d-37be-44c8-b97a-ac3c5f78def9:1',
+                '7c8ba8ec-fe5d-4ec0-8b5b-c55ed52242fb:1',
+                3,
+                'start',
+                'SRID=3067;POINT(386475.5 6673581.8)',
+                ARRAY[
+                    ST_GeomFromEWKT('SRID=3067;POINT(386396.0 6673675.2)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386400.4 6673664.0)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386408.0 6673654.7)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386467.8 6673604.0)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386472.9 6673596.2)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386474.6 6673592.2)')
+                ],
+                true
+            ),
+            -- H0256-H2418
+            (
+                '6cfdc892-3cc0-45d5-a8d1-dbcc2f401528:1',
+                '7c8ba8ec-fe5d-4ec0-8b5b-c55ed52242fb:1',
+                4,
+                'SRID=3067;POINT(386401.5 6673654.3)',
+                'SRID=3067;POINT(386465.3 6673569.0)',
+                ARRAY[
+                    ST_GeomFromEWKT('SRID=3067;POINT(386465.7 6673600.9)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386470.2 6673593.1)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386471.8 6673584.8)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386471.1 6673580.6)'),
+                    ST_GeomFromEWKT('SRID=3067;POINT(386469.5 6673576.4)')
+                ],
+                true
             ),
             -- H2041-H2059, H2047-H2059, H2050-H2059 #1
             (
@@ -154,17 +211,18 @@ drl_fix AS (
                 'SRID=3067;POINT(385909.3 6672180.4)',
                 ARRAY[
                     ST_GeomFromEWKT('SRID=3067;POINT(385921.3 6672169.7)')
-                ]
+                ],
+                false
             ),
             -- H2041-H2059, H2047-H2059, H2050-H2059 #2
-            ('a935dcb1-9fda-4d2c-a2af-6871c2c1ec4b:1', '2ce16faa-76d8-46b7-974b-9d39d52dd8b7:1', 4, 'end', 'SRID=3067;POINT(385909.3 6672180.4)', ARRAY[]::geometry(Point)[]),
+            ('a935dcb1-9fda-4d2c-a2af-6871c2c1ec4b:1', '2ce16faa-76d8-46b7-974b-9d39d52dd8b7:1', 4, 'end', 'SRID=3067;POINT(385909.3 6672180.4)', ARRAY[]::geometry(Point)[], false),
             -- H2041-H2059, H2047-H2059, H2050-H2059 #3
-            ('7c985dfd-e37f-47ed-b564-569994464215:1', 'a935dcb1-9fda-4d2c-a2af-6871c2c1ec4b:1', 4, 'end', 'SRID=3067;POINT(385892.7 6672193.2)', ARRAY[]::geometry(Point)[]),
+            ('7c985dfd-e37f-47ed-b564-569994464215:1', 'a935dcb1-9fda-4d2c-a2af-6871c2c1ec4b:1', 4, 'end', 'SRID=3067;POINT(385892.7 6672193.2)', ARRAY[]::geometry(Point)[], false),
             -- H4716-H4161
-            ('d7a34688-52d5-40b6-aeaa-915602fb4ba7:1', '9cbe8c14-4ad8-4435-b918-31b4d339e55e:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[]),
+            ('d7a34688-52d5-40b6-aeaa-915602fb4ba7:1', '9cbe8c14-4ad8-4435-b918-31b4d339e55e:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[], false),
             -- Ka1703-Ka1730, Ka1706-Ka1730, Ka1730-Ka1704, Ka1730-Ka1705, Ka1732-Ka1704, Ka1781-Ka1705 #1
             -- * !!! Requires a linkkityyp of value 8
-            ('ba1a3173-532a-48c7-ad41-4e9e32f1be71:1', 'b1ea93b0-c50b-459f-9c4f-90eb5e0238a2:1', 2, 'start', NULL::text, ARRAY[]::geometry(Point)[]),
+            ('ba1a3173-532a-48c7-ad41-4e9e32f1be71:1', 'b1ea93b0-c50b-459f-9c4f-90eb5e0238a2:1', 2, 'start', NULL::text, ARRAY[]::geometry(Point)[], false),
             -- Ka1703-Ka1730, Ka1706-Ka1730, Ka1730-Ka1704, Ka1730-Ka1705, Ka1732-Ka1704, Ka1781-Ka1705 #2
             -- * !!! Requires a linkkityyp of value 8
             (
@@ -175,19 +233,20 @@ drl_fix AS (
                 'SRID=3067;POINT(374484.6 6677247.9)',
                 ARRAY[
                     ST_GeomFromEWKT('SRID=3067;POINT(374489.6 6677207.4)')
-                ]
+                ],
+                false
             ),
             -- Mä8000-Mä8052
-            ('b88ca87e-59c0-4a21-9a56-6e5db65e2519:1', 'd7120fe2-8a7e-4cdc-8b26-ed8c20276bc0:2', 2, 'start', NULL::text, ARRAY[]::geometry(Point)[]),
+            ('b88ca87e-59c0-4a21-9a56-6e5db65e2519:1', 'd7120fe2-8a7e-4cdc-8b26-ed8c20276bc0:2', 2, 'start', NULL::text, ARRAY[]::geometry(Point)[], false),
             -- V1560-V1506, V1560-V1521, V1561-V1521, V1567-V1521
-            ('d82301f3-8aca-42d7-ae61-49c721c1be30:1', 'f0fbd3a0-3697-49ee-a6d9-50f4b34ac499:1', 4, 'start', NULL::text, ARRAY[]::geometry(Point)[]),
+            ('d82301f3-8aca-42d7-ae61-49c721c1be30:1', 'f0fbd3a0-3697-49ee-a6d9-50f4b34ac499:1', 4, 'start', NULL::text, ARRAY[]::geometry(Point)[], false),
             -- V1565-V1505, V1565-V1560, V1565-V1567
-            ('d82301f3-8aca-42d7-ae61-49c721c1be30:1', 'f0fbd3a0-3697-49ee-a6d9-50f4b34ac499:1', 3, 'end', NULL::text, ARRAY[]::geometry(Point)[]),
+            ('d82301f3-8aca-42d7-ae61-49c721c1be30:1', 'f0fbd3a0-3697-49ee-a6d9-50f4b34ac499:1', 3, 'end', NULL::text, ARRAY[]::geometry(Point)[], false),
             -- V1704-V1746, V1704-V1748, V1715-V1707, V1715-V1767, V1715-V1799, V1744-1799
-            ('7ddd8c8a-50d5-463a-a679-178047c1787c:1', '141d4255-937a-4004-b8d6-de826ae6d63e:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[]),
+            ('7ddd8c8a-50d5-463a-a679-178047c1787c:1', '141d4255-937a-4004-b8d6-de826ae6d63e:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[], false),
             -- V1722-V1711, V1722-V1743, V1745-V1798, V1747-V1798, V1758-V1711, V1758-V1743, V1767-V1711
-            ('bd44ed9d-5333-4ca8-992d-665fc122f26b:1', 'f7f991b5-c5f5-40bf-b13b-2ebe2883d952:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[])
-    ) AS t(from_link_id, to_link_id, joint_link_ajosuunta, from_link_terminus_opt, closest_point_ewkt_on_to_link_opt, interim_points_arr)
+            ('bd44ed9d-5333-4ca8-992d-665fc122f26b:1', 'f7f991b5-c5f5-40bf-b13b-2ebe2883d952:1', 2, NULL::text, NULL::text, ARRAY[]::geometry(Point)[], false)
+    ) AS t(from_link_id, to_link_id, joint_link_ajosuunta, from_link_terminus_opt, closest_point_ewkt_on_to_link_opt, interim_points_arr, is_tram)
 ),
 drl_fix_2 AS (
     SELECT
@@ -203,7 +262,8 @@ drl_fix_2 AS (
         ) AS end_point,
         joint_link_ajosuunta,
         split_fraction.n AS split_fraction,
-        interim_points_arr
+        interim_points_arr,
+        is_tram
     FROM drl_fix
     INNER JOIN :schema.dr_linkki from_drl ON from_drl.link_id = drl_fix.from_link_id
     INNER JOIN :schema.dr_linkki to_drl ON to_drl.link_id = drl_fix.to_link_id
@@ -272,7 +332,8 @@ joint_links AS (
                 'HSL''s supplementary loop link for bus traffic.'
             ELSE
                 'HSL''s supplementary joint link connecting Digiroad links.'
-        END AS description
+        END AS description,
+        is_tram
     FROM drl_fix_2 fix
     INNER JOIN :schema.dr_linkki from_drl ON from_drl.link_id = fix.from_link_id
     CROSS JOIN LATERAL (
@@ -322,7 +383,9 @@ INSERT INTO :schema.fix_layer_link (
     linkkityyp,
     silta_alik,
     link_tila,
-    is_generic_bus, is_tall_electric_bus, is_tram, is_train, is_metro, is_ferry,
+    is_generic_bus, is_tall_electric_bus,
+    is_tram,
+    is_train, is_metro, is_ferry,
     description,
     geom
 )
@@ -335,7 +398,9 @@ SELECT
     joint_links.linkkityyp,
     joint_links.silta_alik,
     joint_links.link_tila,
-    true, true, false, false, false, false,
+    true, true,
+    is_tram,
+    false, false, false,
     description,
     joint_links.geom
 FROM joint_links
