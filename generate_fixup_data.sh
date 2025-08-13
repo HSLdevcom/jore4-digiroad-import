@@ -19,7 +19,7 @@ docker_start
 docker_exec postgres "exec $PG_WAIT"
 
 # Generate HSL supplementary links and stop points.
-docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/add_hsl_fixup_data_for_dr_2025_01.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
+docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/add_hsl_fixup_data_for_dr_2025_02.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
 
 # Rewrite the GeoPackage file containing HSL's infrastructure network
 # supplementing data.
