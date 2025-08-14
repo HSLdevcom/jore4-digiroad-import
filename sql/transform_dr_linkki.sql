@@ -16,7 +16,7 @@ WHERE
     --  9, -- Jalankulkualueen osa, esim. kävelykatu tai jalkakäytävä
     -- 10, -- Huolto- tai pelastustien osa
        11, -- Liitännäisliikennealueen osa
-    -- 12, -- Ajopolku, maastoajoneuvolla ajettavissa olevat tiet
+       12, -- Ajopolku, maastoajoneuvolla ajettavissa olevat tiet
     -- 13, -- Huoltoaukko moottoritiellä
     -- 14, -- Erikoiskuljetusyhteys ilman puomia
     -- 15, -- Erikoiskuljetusyhteys puomilla
