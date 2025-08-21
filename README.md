@@ -124,6 +124,14 @@ project. The data types are as they appear in the GeoPackage format (SQLite).
 | `sijainti_m` | REAL       | -        | The distance in meters from the location of the stop point to the start point of the associated infrastructure link. The field is optional. In case of `NULL` value, the distance is calculated automatically during the import process. |
 | `notes`      | TEXT       | -        | Notes for/from traffic planner |
 
+## Overwriting GeoPackage file
+
+If you have made changes to the _JORE4 fix layer_ by altering the table metadata or data in the database, you can write them to the GeoPackage file with the following script call.
+
+```sh
+./rewrite_fixup_geopkg.sh
+```
+
 ## Exporting Digiroad data
 
 ```sh
