@@ -13,6 +13,7 @@ ALTER TABLE :schema.dr_pysakki_out
     ALTER COLUMN nimi_su TYPE text,
     ALTER COLUMN nimi_ru TYPE text,
     ALTER COLUMN yllapitaja TYPE int,
+    ALTER COLUMN yllap_tunn TYPE text,
     ALTER COLUMN matk_tunn TYPE text,
     ALTER COLUMN aikataulu TYPE int,
     ALTER COLUMN katos TYPE int,
@@ -35,6 +36,7 @@ ALTER TABLE :schema.dr_pysakki
     ALTER COLUMN id SET NOT NULL,
     ALTER COLUMN link_id SET NOT NULL,
     ALTER COLUMN valtak_id SET NOT NULL,
+    ALTER COLUMN yllapitaja SET NOT NULL,
     ALTER COLUMN kuntakoodi SET NOT NULL,
     ALTER COLUMN koord_x SET NOT NULL,
     ALTER COLUMN koord_y SET NOT NULL,
@@ -43,8 +45,9 @@ ALTER TABLE :schema.dr_pysakki
     ALTER COLUMN geom SET NOT NULL,
 
     ADD CONSTRAINT dr_pysakki_pkey PRIMARY KEY (id),
+    ADD CONSTRAINT uk_dr_pysakki_valtak_id UNIQUE (valtak_id),
     ADD CONSTRAINT fk_dr_pysakki_link_id FOREIGN KEY (link_id) REFERENCES :schema.dr_linkki (link_id);
 
 CREATE INDEX dr_pysakki_link_id_idx ON :schema.dr_pysakki (link_id);
-CREATE INDEX dr_pysakki_valtak_id_idx ON :schema.dr_pysakki (valtak_id);
+CREATE INDEX dr_pysakki_yllapitaja_yllap_tunn_idx ON :schema.dr_pysakki (yllapitaja, yllap_tunn);
 CREATE INDEX dr_pysakki_geom_idx ON :schema.dr_pysakki USING gist (geom);
