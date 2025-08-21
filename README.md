@@ -119,7 +119,9 @@ project. The data types are as they appear in the GeoPackage format (SQLite).
 | `fid`        | INTEGER    | X        | The primary key generated internally in GeoPackage. |
 | `geom`       | POINT      | X        | The `POINT` geometry describing the location of this public transport stop point |
 | `valtak_id`  | INTEGER    | X        | The national ID for the stop point that is also known as _ELY number_. The column has a unique constraint. |
-| `matk_tunn`  | TEXT       | -        | The passenger ID for the stop point e.g. H1234 |
+| `matk_tunn`  | TEXT       | -        | The passenger ID for the stop point e.g. `H1234` |
+| `yllapitaja` | INTEGER    | -        | A code value defined by Digiroad for the party responsible for maintaining the stop point. |
+| `yllap_tunn` | TEXT       | -        | The identifier of the stop point, as defined by the party responsible for maintaining the stop point. |
 | `nimi_su`    | TEXT       | -        | The name of stop point in Finnish |
 | `nimi_ru`    | TEXT       | -        | The name of stop point in Swedish |
 | `link_id`    | TEXT       | -        | An optional reference to the infrastructure link along which the stop point is located. In case of `NULL` or unknown link ID, the link association will be calculated automatically during the import process. |
