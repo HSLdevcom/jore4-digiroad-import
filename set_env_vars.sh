@@ -12,9 +12,9 @@ export DOCKER_CONTAINER_NAME="jore4-postgis-digiroad"
 
 # Database details
 export DB_NAME="digiroad"
-export DB_IMPORT_SCHEMA_NAME="digiroad"
-export DB_MBTILES_SCHEMA_NAME="mbtiles"
-export DB_ROUTING_SCHEMA_NAME="routing"
+export DB_SCHEMA_NAME_DIGIROAD="digiroad"
+export DB_SCHEMA_NAME_MBTILES="mbtiles"
+export DB_SCHEMA_NAME_ROUTING="routing"
 
 # Commands to run inside Docker container.
 export PSQL="exec psql -h \"\$POSTGRES_PORT_5432_TCP_ADDR\" -p \"\$POSTGRES_PORT_5432_TCP_PORT\" -U digiroad -d $DB_NAME --no-password"

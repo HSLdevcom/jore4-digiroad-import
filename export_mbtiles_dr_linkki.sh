@@ -35,7 +35,7 @@ PGSQL2SHP='pgsql2shp -h "$POSTGRES_PORT_5432_TCP_ADDR" -p "$POSTGRES_PORT_5432_T
 
 # Export pg_dump file from database.
 time docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres -v ${SHP_OUTPUT_DIR}/:/tmp/shp $DOCKER_IMAGE \
-  sh -c "$PGSQL2SHP -f /tmp/shp/${SHP_OUTPUT_FILE} digiroad ${DB_MBTILES_SCHEMA_NAME}.${DB_TABLE_NAME}"
+  sh -c "$PGSQL2SHP -f /tmp/shp/${SHP_OUTPUT_FILE} digiroad ${DB_SCHEMA_NAME_MBTILES}.${DB_TABLE_NAME}"
 
 # Convert from Shapefile to GeoJSON.
 
