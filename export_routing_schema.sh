@@ -4,7 +4,7 @@
 set -euxo pipefail
 
 # Source common environment variables.
-source "$(cd "$(dirname "$0")"; pwd -P)/set_env_vars.sh"
+source "$(cd "$(dirname "$0")" || exit; pwd -P)/set_env_vars.sh"
 
 # Start Docker container.
 #
@@ -63,7 +63,7 @@ docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$DUMP_DIR":/tmp/pgd
 # Derive additional toc lists for restoring data (and only data) for selected
 # tables. The additional tocs are created with current deployment scenarios of
 # map-matching Docker image taken into account.
-${CWD}/util/create_additional_pgdump_tocs.sh "${DUMP_DIR}/${PGDUMP_OUTPUT}"
+"$CWD"/util/create_additional_pgdump_tocs.sh "${DUMP_DIR}/${PGDUMP_OUTPUT}"
 
 # Stop Docker container.
 docker stop "$DOCKER_CONTAINER_NAME"
