@@ -31,11 +31,9 @@ docker start "$DOCKER_CONTAINER_NAME"
 # Wait for PostgreSQL to start.
 docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres $DOCKER_IMAGE sh -c "$PG_WAIT"
 
-PGSQL2SHP="pgsql2shp -h \"\$POSTGRES_PORT_5432_TCP_ADDR\" -p \"\$POSTGRES_PORT_5432_TCP_PORT\" -u digiroad"
-
 # Export pg_dump file from database.
 docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$SHP_OUTPUT_DIR"/:/tmp/shp "$DOCKER_IMAGE" \
-  sh -c "$PGSQL2SHP -f /tmp/shp/${SHP_OUTPUT_FILE} digiroad ${DB_SCHEMA_NAME_MBTILES}.${DB_TABLE_NAME}"
+  sh -c "$PGSQL2SHP -f /tmp/shp/${SHP_OUTPUT_FILE} ${DB_NAME} ${DB_SCHEMA_NAME_MBTILES}.${DB_TABLE_NAME}"
 
 # Convert from Shapefile to GeoJSON.
 
