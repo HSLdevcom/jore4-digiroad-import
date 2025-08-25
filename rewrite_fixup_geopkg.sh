@@ -4,7 +4,7 @@
 set -euxo pipefail
 
 # Source common environment variables.
-source "$(cd "$(dirname "$0")"; pwd -P)/set_env_vars.sh"
+source "$(dirname "$0")/set_env_vars.sh"
 
 # Start Docker container. The container is expected to exist and contain required database tables to be exported.
 docker start "$DOCKER_CONTAINER_NAME"

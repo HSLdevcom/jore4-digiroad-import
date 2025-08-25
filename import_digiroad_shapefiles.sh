@@ -4,7 +4,7 @@
 set -euxo pipefail
 
 # Source common environment variables.
-source "$(cd "$(dirname "$0")"; pwd -P)/set_env_vars.sh"
+source "$(dirname "$0")/set_env_vars.sh"
 
 AREA="UUSIMAA"
 
