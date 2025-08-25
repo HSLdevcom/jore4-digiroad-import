@@ -19,7 +19,7 @@ export DB_SCHEMA_NAME_MBTILES="mbtiles"
 export DB_SCHEMA_NAME_ROUTING="routing"
 
 # Commands to run inside Docker container.
-export PSQL="exec psql -h \"\$POSTGRES_PORT_5432_TCP_ADDR\" -p \"\$POSTGRES_PORT_5432_TCP_PORT\" -U digiroad -d $DB_NAME --no-password"
+export PG_DUMP="exec pg_dump -h \"\$POSTGRES_PORT_5432_TCP_ADDR\" -p \"\$POSTGRES_PORT_5432_TCP_PORT\" -d $DB_NAME -U digiroad --no-password"
 export PG_WAIT="exec /wait-pg.sh $DB_NAME \"\$POSTGRES_PORT_5432_TCP_ADDR\" \"\$POSTGRES_PORT_5432_TCP_PORT\""
 export PG_WAIT_LOCAL="exec /wait-pg.sh $DB_NAME localhost \"\$POSTGRES_PORT_5432_TCP_PORT\""
-export PG_DUMP="exec pg_dump -h \"\$POSTGRES_PORT_5432_TCP_ADDR\" -p \"\$POSTGRES_PORT_5432_TCP_PORT\" -d $DB_NAME -U digiroad --no-password"
+export PSQL="exec psql -h \"\$POSTGRES_PORT_5432_TCP_ADDR\" -p \"\$POSTGRES_PORT_5432_TCP_PORT\" -U digiroad -d $DB_NAME --no-password"
