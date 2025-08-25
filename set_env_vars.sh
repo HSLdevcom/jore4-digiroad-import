@@ -5,10 +5,12 @@ CWD="$(cd "$(dirname "$0")" || exit; pwd -P)"
 export CWD
 export WORK_DIR="${CWD}/workdir"
 
+# shapefile encoding
 export SHP_ENCODING="UTF-8"
 
 export DOCKER_IMAGE="jore4/postgis-digiroad"
 export DOCKER_CONTAINER_NAME="jore4-postgis-digiroad"
+export DOCKER_CONTAINER_PORT="21000"
 
 # Database details
 export DB_NAME="digiroad"
