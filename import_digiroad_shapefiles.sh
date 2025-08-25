@@ -40,14 +40,30 @@ unzip -u "$DOWNLOAD_TARGET_FILE" Dokumentit/* -d "$DOWNLOAD_TARGET_DIR"
 docker kill "$DOCKER_CONTAINER_NAME" &> /dev/null || true
 docker rm -v "$DOCKER_CONTAINER_NAME" &> /dev/null || true
 
-# Create and start new Docker container.
-docker run --name "$DOCKER_CONTAINER_NAME" -p 127.0.0.1:${DOCKER_CONTAINER_PORT}:5432 -e POSTGRES_HOST_AUTH_METHOD=trust -d "$DOCKER_IMAGE"
+# Create directories that will be mounted to Docker container.
+mkdir -p "$WORK_DIR"/csv
+mkdir -p "$WORK_DIR"/mbtiles
+mkdir -p "$WORK_DIR"/pgdump
 
-# Wait for PostgreSQL to start.
-docker exec "$DOCKER_CONTAINER_NAME" sh -c "$PG_WAIT_LOCAL"
+# Create and start new Docker container. Mount all directories as volumes that
+# are needed by various processing scripts.
+docker run \
+  --name "$DOCKER_CONTAINER_NAME" \
+  -p 127.0.0.1:${DOCKER_CONTAINER_PORT}:5432 \
+  -e POSTGRES_HOST_AUTH_METHOD=trust \
+  -v "$CWD"/fixup/digiroad:/tmp/gpkg \
+  -v "$CWD"/sql:/tmp/sql \
+  -v "$SHP_FILE_DIR":/tmp/shp \
+  -v "$WORK_DIR"/csv:/tmp/csv \
+  -v "$WORK_DIR"/mbtiles:/tmp/mbtiles \
+  -v "$WORK_DIR"/pgdump:/tmp/pgdump \
+  -d "$DOCKER_IMAGE"
+
+# Wait for PostgreSQL server to be ready.
+$DOCKER_EXEC_POSTGRES "exec $PG_WAIT"
 
 # Create digiroad import schema into database.
-docker exec "$DOCKER_CONTAINER_NAME" sh -c "$PSQL -nt -c \"CREATE SCHEMA ${DB_SCHEMA_NAME_DIGIROAD};\""
+$DOCKER_EXEC_POSTGRES "exec $PSQL -nt -c \"CREATE SCHEMA ${DB_SCHEMA_NAME_DIGIROAD};\""
 
 SHP2PGSQL="shp2pgsql -D -i -s 3067 -S -N abort -W $SHP_ENCODING"
 
@@ -59,51 +75,38 @@ for SUB_AREA_SHP_TYPE in $SUB_AREA_SHP_TYPES; do
   TABLE_NAME="${DB_SCHEMA_NAME_DIGIROAD}.$(echo "$SUB_AREA_SHP_TYPE" | awk '{print tolower($0)}')"
 
   # Create database table for each shape type.
-  docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$SHP_FILE_DIR":/tmp/shp "$DOCKER_IMAGE" \
-    sh -c "$SHP2PGSQL -p /tmp/shp/${SUB_AREA}/${SUB_AREA_SHP_TYPE}.shp $TABLE_NAME | $PSQL -v ON_ERROR_STOP=1 -q"
+  $DOCKER_EXEC_POSTGRES "$SHP2PGSQL -p /tmp/shp/${SUB_AREA}/${SUB_AREA_SHP_TYPE}.shp $TABLE_NAME | exec $PSQL -v ON_ERROR_STOP=1 -q"
 
   # Populate database table from multiple shapefiles from sub areas.
-  docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$SHP_FILE_DIR":/tmp/shp "$DOCKER_IMAGE" \
-    sh -c "for SUB_AREA in ${SUB_AREAS}; do $SHP2PGSQL -a /tmp/shp/\${SUB_AREA}/${SUB_AREA_SHP_TYPE}.shp $TABLE_NAME | $PSQL -v ON_ERROR_STOP=1; done"
+  $DOCKER_EXEC_POSTGRES "for SUB_AREA in ${SUB_AREAS}; do $SHP2PGSQL -a /tmp/shp/\${SUB_AREA}/${SUB_AREA_SHP_TYPE}.shp $TABLE_NAME | exec $PSQL -v ON_ERROR_STOP=1; done"
 done
 
 # Import "add_links" and "remove_links" layers from GeoPackage fixup file if it exists.
 if [ -f "$CWD"/fixup/digiroad/fixup.gpkg ]; then
-  OGR2OGR="exec ogr2ogr -f PostgreSQL $OGR2OGR_PG_REF"
+  OGR2OGR="exec ogr2ogr -f PostgreSQL $OGR2OGR_PG_REF /tmp/gpkg/fixup.gpkg"
 
-  docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/fixup/digiroad:/tmp/gpkg "$DOCKER_IMAGE" \
-    sh -c "$OGR2OGR /tmp/gpkg/fixup.gpkg -nln fix_layer_link add_links"
-
-  docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/fixup/digiroad:/tmp/gpkg "$DOCKER_IMAGE" \
-    sh -c "$OGR2OGR /tmp/gpkg/fixup.gpkg -nln fix_layer_link_exclusion_geometry remove_links"
-
-  docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/fixup/digiroad:/tmp/gpkg "$DOCKER_IMAGE" \
-    sh -c "$OGR2OGR /tmp/gpkg/fixup.gpkg -nln fix_layer_stop_point add_stop_points"
+  $DOCKER_EXEC_POSTGRES "$OGR2OGR -nln fix_layer_link add_links"
+  $DOCKER_EXEC_POSTGRES "$OGR2OGR -nln fix_layer_link_exclusion_geometry remove_links"
+  $DOCKER_EXEC_POSTGRES "$OGR2OGR -nln fix_layer_stop_point add_stop_points"
 fi
 
 # Load DR_PYSAKKI shapefile into database.
-docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$SHP_FILE_DIR":/tmp/shp "$DOCKER_IMAGE" \
-  sh -c "$SHP2PGSQL -c /tmp/shp/DR_PYSAKKI.shp ${DB_SCHEMA_NAME_DIGIROAD}.dr_pysakki | $PSQL -v ON_ERROR_STOP=1"
+$DOCKER_EXEC_POSTGRES "$SHP2PGSQL -c /tmp/shp/DR_PYSAKKI.shp ${DB_SCHEMA_NAME_DIGIROAD}.dr_pysakki | exec $PSQL -v ON_ERROR_STOP=1"
 
 # Process road geometries and filtering properties in database.
-docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/sql:/tmp/sql "$DOCKER_IMAGE" \
-  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_linkki.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
+$DOCKER_EXEC_POSTGRES "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_linkki.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
 
 # Process stops and filter properties in database.
-docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/sql:/tmp/sql "$DOCKER_IMAGE" \
-  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_pysakki.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
+$DOCKER_EXEC_POSTGRES "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_pysakki.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
 
 # Create SQL views combining Digiroad links and public transport stops with fixup layers from GeoPackage file.
-docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/sql:/tmp/sql "$DOCKER_IMAGE" \
-  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/apply_fixup_layer.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
+$DOCKER_EXEC_POSTGRES "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/apply_fixup_layer.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
 
 # Process turn restrictions and filter properties in database.
-docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/sql:/tmp/sql "$DOCKER_IMAGE" \
-  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_kaantymisrajoitus.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
+$DOCKER_EXEC_POSTGRES "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_kaantymisrajoitus.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
 
 # Create separate schema for exporting data in MBTiles format.
-docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/sql:/tmp/sql "$DOCKER_IMAGE" \
-  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/create_mbtiles_schema.sql -v source_schema=$DB_SCHEMA_NAME_DIGIROAD -v schema=$DB_SCHEMA_NAME_MBTILES"
+$DOCKER_EXEC_POSTGRES "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/create_mbtiles_schema.sql -v source_schema=$DB_SCHEMA_NAME_DIGIROAD -v schema=$DB_SCHEMA_NAME_MBTILES"
 
 # Stop Docker container.
 docker stop "$DOCKER_CONTAINER_NAME"

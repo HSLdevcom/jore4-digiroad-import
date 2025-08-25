@@ -10,16 +10,13 @@ source "$(dirname "$0")/set_env_vars.sh"
 docker start "$DOCKER_CONTAINER_NAME"
 
 # Wait for PostgreSQL server to be ready.
-docker exec "$DOCKER_CONTAINER_NAME" sh -c "$PG_WAIT"
+$DOCKER_EXEC_POSTGRES "exec $PG_WAIT"
 
-docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/fixup/digiroad:/tmp/gpkg "$DOCKER_IMAGE" \
-  sh -c "ogr2ogr -f GPKG -overwrite /tmp/gpkg/fixup.gpkg $OGR2OGR_PG_REF -nlt LINESTRINGZM -nln add_links -dim XYZM -sql \"SELECT * FROM fix_layer_link\""
+OGR2OGR="exec ogr2ogr -f GPKG -overwrite /tmp/gpkg/fixup.gpkg $OGR2OGR_PG_REF"
 
-docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/fixup/digiroad:/tmp/gpkg "$DOCKER_IMAGE" \
-  sh -c "ogr2ogr -f GPKG -overwrite /tmp/gpkg/fixup.gpkg $OGR2OGR_PG_REF -nln add_stop_points -sql \"SELECT * FROM fix_layer_stop_point\""
-
-docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/fixup/digiroad:/tmp/gpkg "$DOCKER_IMAGE" \
-  sh -c "ogr2ogr -f GPKG -overwrite /tmp/gpkg/fixup.gpkg $OGR2OGR_PG_REF -nlt LINESTRINGZM -nln remove_links -dim XYZM -sql \"SELECT * FROM fix_layer_link_exclusion_geometry\""
+$DOCKER_EXEC_HOSTUSER "$OGR2OGR -nlt LINESTRINGZM -nln add_links -dim XYZM -sql \"SELECT * FROM fix_layer_link\""
+$DOCKER_EXEC_HOSTUSER "$OGR2OGR -nln add_stop_points -sql \"SELECT * FROM fix_layer_stop_point\""
+$DOCKER_EXEC_HOSTUSER "$OGR2OGR -nlt LINESTRINGZM -nln remove_links -dim XYZM -sql \"SELECT * FROM fix_layer_link_exclusion_geometry\""
 
 # Stop Docker container.
 docker stop "$DOCKER_CONTAINER_NAME"
