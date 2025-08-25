@@ -47,7 +47,7 @@ docker run --name "$DOCKER_CONTAINER_NAME" -p 127.0.0.1:21000:5432 -e POSTGRES_H
 docker exec "$DOCKER_CONTAINER_NAME" sh -c "$PG_WAIT_LOCAL"
 
 # Create digiroad import schema into database.
-docker exec "$DOCKER_CONTAINER_NAME" sh -c "$PSQL -nt -c \"CREATE SCHEMA ${DB_IMPORT_SCHEMA_NAME};\""
+docker exec "$DOCKER_CONTAINER_NAME" sh -c "$PSQL -nt -c \"CREATE SCHEMA ${DB_SCHEMA_NAME_DIGIROAD};\""
 
 SHP2PGSQL="shp2pgsql -D -i -s 3067 -S -N abort -W $SHP_ENCODING"
 
@@ -56,7 +56,7 @@ SUB_AREA_SHP_TYPES="DR_LINKKI DR_KAANTYMISRAJOITUS"
 
 for SUB_AREA_SHP_TYPE in $SUB_AREA_SHP_TYPES; do
   # Derive lowercase table name for shape type.
-  TABLE_NAME="${DB_IMPORT_SCHEMA_NAME}.$(echo "$SUB_AREA_SHP_TYPE" | awk '{print tolower($0)}')"
+  TABLE_NAME="${DB_SCHEMA_NAME_DIGIROAD}.$(echo "$SUB_AREA_SHP_TYPE" | awk '{print tolower($0)}')"
 
   # Create database table for each shape type.
   docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$SHP_FILE_DIR":/tmp/shp "$DOCKER_IMAGE" \
@@ -69,7 +69,7 @@ done
 
 # Import "add_links" and "remove_links" layers from GeoPackage fixup file if it exists.
 if [ -f "$CWD"/fixup/digiroad/fixup.gpkg ]; then
-  OGR2OGR="exec ogr2ogr -f PostgreSQL \"PG:host=\$POSTGRES_PORT_5432_TCP_ADDR port=\$POSTGRES_PORT_5432_TCP_PORT dbname=$DB_NAME user=digiroad schemas=${DB_IMPORT_SCHEMA_NAME}\""
+  OGR2OGR="exec ogr2ogr -f PostgreSQL \"PG:host=\$POSTGRES_PORT_5432_TCP_ADDR port=\$POSTGRES_PORT_5432_TCP_PORT dbname=$DB_NAME user=digiroad schemas=${DB_SCHEMA_NAME_DIGIROAD}\""
 
   docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/fixup/digiroad:/tmp/gpkg "$DOCKER_IMAGE" \
     sh -c "$OGR2OGR /tmp/gpkg/fixup.gpkg -nln fix_layer_link add_links"
@@ -83,27 +83,27 @@ fi
 
 # Load DR_PYSAKKI shapefile into database.
 docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$SHP_FILE_DIR":/tmp/shp "$DOCKER_IMAGE" \
-  sh -c "$SHP2PGSQL -c /tmp/shp/DR_PYSAKKI.shp ${DB_IMPORT_SCHEMA_NAME}.dr_pysakki | $PSQL -v ON_ERROR_STOP=1"
+  sh -c "$SHP2PGSQL -c /tmp/shp/DR_PYSAKKI.shp ${DB_SCHEMA_NAME_DIGIROAD}.dr_pysakki | $PSQL -v ON_ERROR_STOP=1"
 
 # Process road geometries and filtering properties in database.
 docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/sql:/tmp/sql "$DOCKER_IMAGE" \
-  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_linkki.sql -v schema=$DB_IMPORT_SCHEMA_NAME"
+  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_linkki.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
 
 # Process stops and filter properties in database.
 docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/sql:/tmp/sql "$DOCKER_IMAGE" \
-  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_pysakki.sql -v schema=$DB_IMPORT_SCHEMA_NAME"
+  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_pysakki.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
 
 # Create SQL views combining Digiroad links and public transport stops with fixup layers from GeoPackage file.
 docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/sql:/tmp/sql "$DOCKER_IMAGE" \
-  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/apply_fixup_layer.sql -v schema=$DB_IMPORT_SCHEMA_NAME"
+  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/apply_fixup_layer.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
 
 # Process turn restrictions and filter properties in database.
 docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/sql:/tmp/sql "$DOCKER_IMAGE" \
-  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_kaantymisrajoitus.sql -v schema=$DB_IMPORT_SCHEMA_NAME"
+  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_kaantymisrajoitus.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
 
 # Create separate schema for exporting data in MBTiles format.
 docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/sql:/tmp/sql "$DOCKER_IMAGE" \
-  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/create_mbtiles_schema.sql -v source_schema=$DB_IMPORT_SCHEMA_NAME -v schema=$DB_MBTILES_SCHEMA_NAME"
+  sh -c "$PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/create_mbtiles_schema.sql -v source_schema=$DB_SCHEMA_NAME_DIGIROAD -v schema=$DB_SCHEMA_NAME_MBTILES"
 
 # Stop Docker container.
 docker stop "$DOCKER_CONTAINER_NAME"

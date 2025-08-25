@@ -14,7 +14,7 @@ docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres $DOCKER_IMAGE sh -c "
 
 PGDUMP_OUTPUT="digiroad_r_$(date "+%Y-%m-%d").pgdump"
 OUTPUT_TABLES="dr_linkki dr_pysakki dr_kaantymisrajoitus"
-OUTPUT_TABLE_OPTIONS="`echo ${OUTPUT_TABLES[@]} | sed \"s/dr_/-t ${DB_IMPORT_SCHEMA_NAME}.dr_/g\"`"
+OUTPUT_TABLE_OPTIONS="`echo ${OUTPUT_TABLES[@]} | sed \"s/dr_/-t ${DB_SCHEMA_NAME_DIGIROAD}.dr_/g\"`"
 
 mkdir -p ${WORK_DIR}/pgdump
 
