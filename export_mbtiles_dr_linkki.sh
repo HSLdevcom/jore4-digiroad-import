@@ -4,7 +4,7 @@
 set -euxo pipefail
 
 # Source common environment variables.
-source "$(cd "$(dirname "$0")"; pwd -P)/set_env_vars.sh"
+source "$(dirname "$0")/set_env_vars.sh"
 
 DB_TABLE_NAME="dr_linkki"
 
@@ -26,29 +26,29 @@ GEOJSON_OUTPUT_FILE="${OUTPUT_FILE_BASENAME}.geojson"
 MBTILES_OUTPUT_FILE="${OUTPUT_FILE_BASENAME}.mbtiles"
 
 # Start Docker container. The container is expected to exist and contain required database table to be exported.
-docker start $DOCKER_CONTAINER_NAME
+docker start "$DOCKER_CONTAINER_NAME"
 
 # Wait for PostgreSQL to start.
-docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres $DOCKER_IMAGE sh -c "$PG_WAIT"
+docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres $DOCKER_IMAGE sh -c "$PG_WAIT"
 
-PGSQL2SHP='pgsql2shp -h "$POSTGRES_PORT_5432_TCP_ADDR" -p "$POSTGRES_PORT_5432_TCP_PORT" -u digiroad'
+PGSQL2SHP="pgsql2shp -h \"\$POSTGRES_PORT_5432_TCP_ADDR\" -p \"\$POSTGRES_PORT_5432_TCP_PORT\" -u digiroad"
 
 # Export pg_dump file from database.
-time docker run --rm --link "${DOCKER_CONTAINER_NAME}":postgres -v ${SHP_OUTPUT_DIR}/:/tmp/shp $DOCKER_IMAGE \
+time docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$SHP_OUTPUT_DIR"/:/tmp/shp "$DOCKER_IMAGE" \
   sh -c "$PGSQL2SHP -f /tmp/shp/${SHP_OUTPUT_FILE} digiroad ${DB_SCHEMA_NAME_MBTILES}.${DB_TABLE_NAME}"
 
 # Convert from Shapefile to GeoJSON.
 
-rm -f ${GEOJSON_OUTPUT_DIR}/$GEOJSON_OUTPUT_FILE || true
-time docker run --rm -v ${SHP_OUTPUT_DIR}/:/tmp/shp -v ${GEOJSON_OUTPUT_DIR}:/tmp/geojson ${DOCKER_IMAGE} \
+rm -f "${GEOJSON_OUTPUT_DIR}/$GEOJSON_OUTPUT_FILE"
+time docker run --rm -v "$SHP_OUTPUT_DIR"/:/tmp/shp -v "$GEOJSON_OUTPUT_DIR":/tmp/geojson "$DOCKER_IMAGE" \
   sh -c "ogr2ogr --config SHAPE_ENCODING $SHP_ENCODING -f GeoJSON -lco COORDINATE_PRECISION=7 /tmp/geojson/$GEOJSON_OUTPUT_FILE /tmp/shp/$SHP_OUTPUT_FILE"
 
 # Convert from GeoJSON to MBTiles.
 
-rm -f "${MBTILES_OUTPUT_DIR}/${MBTILES_OUTPUT_FILE}" || true
-rm -f "${MBTILES_OUTPUT_DIR}/${MBTILES_OUTPUT_FILE}-journal" || true
-docker run --rm -v ${MBTILES_OUTPUT_DIR}/:/tmp/mbtiles -v ${GEOJSON_OUTPUT_DIR}:/tmp/geojson ${DOCKER_IMAGE} \
+rm -f "${MBTILES_OUTPUT_DIR}/${MBTILES_OUTPUT_FILE}"
+rm -f "${MBTILES_OUTPUT_DIR}/${MBTILES_OUTPUT_FILE}-journal"
+docker run --rm -v "$MBTILES_OUTPUT_DIR"/:/tmp/mbtiles -v "$GEOJSON_OUTPUT_DIR":/tmp/geojson "$DOCKER_IMAGE" \
   sh -c "tippecanoe /tmp/geojson/$GEOJSON_OUTPUT_FILE -o /tmp/$MBTILES_OUTPUT_FILE -z$MBTILES_MAX_ZOOM_LEVEL -X -l $MBTILES_LAYER_NAME -n \"$MBTILES_DESCRIPTION\" -f; mv /tmp/$MBTILES_OUTPUT_FILE /tmp/mbtiles/$MBTILES_OUTPUT_FILE"
 
 # Stop Docker container.
-docker stop $DOCKER_CONTAINER_NAME
+docker stop "$DOCKER_CONTAINER_NAME"
