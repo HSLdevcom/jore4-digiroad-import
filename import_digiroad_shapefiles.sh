@@ -69,7 +69,7 @@ done
 
 # Import "add_links" and "remove_links" layers from GeoPackage fixup file if it exists.
 if [ -f "$CWD"/fixup/digiroad/fixup.gpkg ]; then
-  OGR2OGR="exec ogr2ogr -f PostgreSQL \"PG:host=\$POSTGRES_PORT_5432_TCP_ADDR port=\$POSTGRES_PORT_5432_TCP_PORT dbname=$DB_NAME user=digiroad schemas=${DB_SCHEMA_NAME_DIGIROAD}\""
+  OGR2OGR="exec ogr2ogr -f PostgreSQL $OGR2OGR_PG_REF"
 
   docker run --rm --link "$DOCKER_CONTAINER_NAME":postgres -v "$CWD"/fixup/digiroad:/tmp/gpkg "$DOCKER_IMAGE" \
     sh -c "$OGR2OGR /tmp/gpkg/fixup.gpkg -nln fix_layer_link add_links"
