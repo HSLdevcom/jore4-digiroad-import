@@ -26,7 +26,7 @@ GEOJSON_OUTPUT_FILE="${OUTPUT_FILE_BASENAME}.geojson"
 MBTILES_OUTPUT_FILE="${OUTPUT_FILE_BASENAME}.mbtiles"
 
 # Start Docker container. The container is expected to exist and contain required database table to be exported.
-docker start "$DOCKER_CONTAINER_NAME"
+docker_start
 
 # Wait for PostgreSQL server to be ready.
 docker_exec postgres "exec $PG_WAIT"
@@ -46,4 +46,4 @@ rm -f "${MBTILES_OUTPUT_DIR}/${MBTILES_OUTPUT_FILE}-journal"
 docker_exec "$CURRUSER" "tippecanoe /tmp/mbtiles/geojson_input/$GEOJSON_OUTPUT_FILE -o /tmp/$MBTILES_OUTPUT_FILE -z$MBTILES_MAX_ZOOM_LEVEL -X -l $MBTILES_LAYER_NAME -n \"$MBTILES_DESCRIPTION\" -f && exec mv /tmp/$MBTILES_OUTPUT_FILE /tmp/mbtiles/$MBTILES_OUTPUT_FILE"
 
 # Stop Docker container.
-docker stop "$DOCKER_CONTAINER_NAME"
+docker_stop

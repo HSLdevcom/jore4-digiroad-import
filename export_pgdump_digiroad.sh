@@ -7,7 +7,7 @@ set -euo pipefail
 source "$(dirname "$0")/set_env_vars.sh"
 
 # Start Docker container. The container is expected to exist and contain all the data to be exported.
-docker start "$DOCKER_CONTAINER_NAME"
+docker_start
 
 # Wait for PostgreSQL server to be ready.
 docker_exec postgres "exec $PG_WAIT"
@@ -22,4 +22,4 @@ mkdir -p "$WORK_DIR"/pgdump
 docker_exec "$CURRUSER" "exec $PG_DUMP -Fc --clean -f /tmp/pgdump/$PGDUMP_OUTPUT $OUTPUT_TABLE_OPTIONS"
 
 # Stop Docker container.
-docker stop "$DOCKER_CONTAINER_NAME"
+docker_stop

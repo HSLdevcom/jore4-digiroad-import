@@ -36,6 +36,14 @@ export PSQL="psql -h $DB_HOST -p $DB_PORT -U $DB_USERNAME -d $DB_NAME --no-passw
 CURRUSER=$(id -u):$(id -g)
 export CURRUSER
 
+docker_start() {
+  docker start "$DOCKER_CONTAINER_NAME"
+}
+
+docker_stop() {
+  docker stop "$DOCKER_CONTAINER_NAME"
+}
+
 print_and_run_cmd() {
   echo "+ $*"
   "$@"
