@@ -104,7 +104,7 @@ project. The data types are as they appear in the GeoPackage format (SQLite).
 | Column name | Data type | Not null | Description |
 | ----------- | --------- | -------- | ----------- |
 | `fid`       | INTEGER   | X        | The primary key generated internally in GeoPackage |
-| `geom`      | GEOMETRY  | X        | The geometry used to find all infrastructure links whose geometry intersects with it. The affected infrastructure links will be marked for removal and will not be included in data exports. | 
+| `geom`      | GEOMETRY  | X        | The geometry used to find all infrastructure links whose geometry intersects with it. The affected infrastructure links will be marked for removal and will not be included in data exports. |
 
 ### GeoPackage _add_stop_points_ layer contents
 
@@ -178,11 +178,11 @@ only.
 
 The table below describes the contents of each toc file generated.
 
-| ToC file                                                         | Description                              |
-| ---------------------------------------------------------------- | -----------------------------------------|
-| `digiroad_r_routing_<date>.pgdump.list`                          | Contains entire routing schema and data. |
-| `digiroad_r_routing_<date>.pgdump.no-enums.links-and-stops.list` | No schema item definitions at all. Contains table data for infrastructure links, topology and public transport stops. Does not include data for enum tables which is already included in the database migration scripts of the map-matching backend. |
-| `digiroad_r_routing_<date>.pgdump.no-enums.only-links.list`      | No schema item definitions at all. Contains table data for infrastructure links and topology. Does not include public transport stops. Does not include data for enum tables which is already included in the database migration scripts of the map-matching backend. |
+| ToC file                                                                  | Description                              |
+| ------------------------------------------------------------------------- | -----------------------------------------|
+| `<date>_create_routing_schema_digiroad_r.pgdump.list`                     | Contains entire routing schema and data. |
+| `<date>_create_routing_schema_digiroad_r.no-enums.links-and-stops.list`   | No schema item definitions at all. Contains table data for infrastructure links, topology and public transport stops. Does not include data for enum tables which is already included in the database migration scripts of the map-matching backend. |
+| `<date>_create_routing_schema_digiroad_r.pgdump.no-enums.only-links.list` | No schema item definitions at all. Contains table data for infrastructure links and topology. Does not include public transport stops. Does not include data for enum tables which is already included in the database migration scripts of the map-matching backend. |
 
 Which one should be used will depend on what deployment strategy with regard to
 database migrations and data population is currently chosen in the map-matching
