@@ -7,7 +7,7 @@ set -euo pipefail
 source "$(dirname "$0")/set_env_vars.sh"
 
 # Start Docker container. The container is expected to exist and contain required database tables to be exported.
-docker start "$DOCKER_CONTAINER_NAME"
+docker_start
 
 # Wait for PostgreSQL server to be ready.
 docker_exec postgres "exec $PG_WAIT"
@@ -19,4 +19,4 @@ docker_exec "$CURRUSER" "$OGR2OGR -nln add_stop_points -sql \"SELECT * FROM fix_
 docker_exec "$CURRUSER" "$OGR2OGR -nlt LINESTRINGZM -nln remove_links -dim XYZM -sql \"SELECT * FROM fix_layer_link_exclusion_geometry\""
 
 # Stop Docker container.
-docker stop "$DOCKER_CONTAINER_NAME"
+docker_stop
