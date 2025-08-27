@@ -10,7 +10,7 @@ source "$(cd "$(dirname "$0")" || exit; pwd -P)/set_env_vars.sh"
 #
 # The container is expected to exist and contain Digiroad schema with data
 # populated from shapefiles.
-docker start "$DOCKER_CONTAINER_NAME"
+$DOCKER_START
 
 # Wait for PostgreSQL server to be ready.
 $DOCKER_EXEC_POSTGRES "exec $PG_WAIT"
@@ -61,4 +61,4 @@ $DOCKER_EXEC_HOSTUSER "exec pg_restore --list \"/tmp/pgdump/${PGDUMP_OUTPUT}\" -
 "$CWD"/util/create_additional_pgdump_tocs.sh "${DUMP_DIR}/${PGDUMP_OUTPUT}"
 
 # Stop Docker container.
-docker stop "$DOCKER_CONTAINER_NAME"
+$DOCKER_STOP

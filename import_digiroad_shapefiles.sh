@@ -109,4 +109,4 @@ $DOCKER_EXEC_POSTGRES "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_ka
 $DOCKER_EXEC_POSTGRES "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/create_mbtiles_schema.sql -v source_schema=$DB_SCHEMA_NAME_DIGIROAD -v schema=$DB_SCHEMA_NAME_MBTILES"
 
 # Stop Docker container.
-docker stop "$DOCKER_CONTAINER_NAME"
+$DOCKER_STOP

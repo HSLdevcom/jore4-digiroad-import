@@ -12,6 +12,9 @@ export DOCKER_IMAGE="jore4/postgis-digiroad"
 export DOCKER_CONTAINER_NAME="jore4-postgis-digiroad"
 export DOCKER_CONTAINER_PORT="21000"
 
+export DOCKER_START="docker start $DOCKER_CONTAINER_NAME"
+export DOCKER_STOP="docker stop $DOCKER_CONTAINER_NAME"
+
 export DOCKER_EXEC_POSTGRES="docker exec -u postgres $DOCKER_CONTAINER_NAME sh -c"
 # In Linux, UID/GID mapping provides correct permissions for files written inside
 # Docker container so that the Docker host user owns them.
