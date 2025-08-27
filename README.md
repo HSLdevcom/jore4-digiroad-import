@@ -46,26 +46,25 @@ Within the script execution further processing for Digiroad data is done as well
 
 ## JORE4 fix layer on top of Digiroad links (a.k.a. _QGIS fixup layer_)
 
-JORE4 project involves a "QGIS fixup layer" in the form of QGIS project. The
+The JORE4 project involves a infrastructure "fixup layer" in the form of a QGIS project. The QGIS
 project file (`fixup/jore4-digiroad-fix-project.qgs`) contains several layers or layer groups:
 * Background map tiles from an online service (currently Digitransit)
-* Digiroad infrastructure links (_DR_LINKKI_) from shapefiles covering Uusimaa (administrative region)
-* Digiroad public transport stops (_DR_PYSAKKI_) from shapefiles covering Uusimaa (administrative region)
+* Digiroad infrastructure links (`DR_LINKKI`) from shapefiles covering Uusimaa (administrative region)
+* Digiroad public transport stops (`DR_PYSAKKI`) from shapefiles covering Uusimaa (administrative region)
 * JORE4 fix layer
 
-With _JORE4 fix layer_ HSL-specific customisations to infrastructure network can
+With the _JORE4 fix layer_ HSL-specific customisations to infrastructure network can
 be achieved. In JORE4, there is a need for more fine-grained infrastructure link
 modeling at some places (e.g. public transport terminals) than what Digiroad
 (eventually
 [Maastotietokanta](https://www.maanmittauslaitos.fi/en/maps-and-spatial-data/expert-users/product-descriptions/topographic-database)
-of [MML](https://www.maanmittauslaitos.fi/en)) currently provides. These
-customisations can be defined in the fix layer of the QGIS project.
+of [MML](https://www.maanmittauslaitos.fi/en)) currently provides.
 
-JORE4 fix layer in the QGIS project is actually a QGIS layer group consisting
-of the QGIS layers that are described in the table below. The data for these
+The _JORE4 fix layer_ in the QGIS project is actually a QGIS layer group consisting
+of the QGIS layers described in the table below. The data for these
 layers is stored in and read from a separate GeoPackage file
-(`fixup/digiroad/fixup.gpkg`). This GeoPackage file will be updated and
-maintained in the daily operational use of JORE4 "ecosystem".
+(`fixup/digiroad/fixup.gpkg`). This GeoPackage file must be updated and maintained
+during the operational use of JORE4.
 
 | QGIS layer        | Description |
 | ----------------- | ----------- |
