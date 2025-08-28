@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Stop on first error. Have meaningful error messages. Print each command to stdout.
+# Stop on first error. Have meaningful error messages.
 set -euo pipefail
 
 # Source common environment variables.
