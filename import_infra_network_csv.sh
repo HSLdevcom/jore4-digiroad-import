@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Stop on first error. Have meaningful error messages. Print each command to stdout.
-set -euxo pipefail
+set -euo pipefail
 
 # Reading connection parameters
 echo "Please fill in the connection parameters for the database to import the data to:"
