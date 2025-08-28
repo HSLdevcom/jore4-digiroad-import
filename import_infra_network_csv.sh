@@ -16,8 +16,8 @@ PGUSERNAME="${PGUSERNAME:-dbadmin}"
 read -p "Password (default: adminpassword): " PGPASSWORD
 PGPASSWORD="${PGPASSWORD:-adminpassword}"
 
-# Source common environment variables.
-source "$(dirname "$0")/set_env_vars.sh"
+# Source common environment variables and functions.
+source "$(dirname "$0")/set_env.sh"
 
 # Import dump from csv file.
 INPUT_FILENAME="infra_network_digiroad.csv"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Source common environment variables.
-source "$(dirname "$0")/set_env_vars.sh"
+# Source common environment variables and functions.
+source "$(dirname "$0")/set_env.sh"
 
 # Create a zip archive containing HSL QGIS fixup project.
 mkdir -p "$WORK_DIR"/zip

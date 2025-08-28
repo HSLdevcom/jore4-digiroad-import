@@ -3,8 +3,8 @@
 # Stop on first error. Have meaningful error messages.
 set -euo pipefail
 
-# Source common environment variables.
-source "$(dirname "$0")/set_env_vars.sh"
+# Source common environment variables and functions.
+source "$(dirname "$0")/set_env.sh"
 
 AREA="UUSIMAA"
 
