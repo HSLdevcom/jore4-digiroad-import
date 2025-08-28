@@ -12,12 +12,6 @@ export DOCKER_IMAGE="jore4/postgis-digiroad"
 export DOCKER_CONTAINER_NAME="jore4-postgis-digiroad"
 export DOCKER_CONTAINER_PORT="21000"
 
-export DOCKER_EXEC_POSTGRES="docker exec -u postgres $DOCKER_CONTAINER_NAME sh -c"
-# In Linux, UID/GID mapping provides correct permissions for files written inside
-# Docker container so that the Docker host user owns them.
-DOCKER_EXEC_HOSTUSER="docker exec -u $(id -u):$(id -g) $DOCKER_CONTAINER_NAME sh -c"
-export DOCKER_EXEC_HOSTUSER
-
 # Database details
 LOCAL_DB_NAME="digiroad"
 export DB_NAME="$LOCAL_DB_NAME"
@@ -35,3 +29,20 @@ export PGSQL2SHP="pgsql2shp -h $DB_HOST -p $DB_PORT -u $DB_USERNAME"
 export PG_DUMP="pg_dump -h $DB_HOST -p $DB_PORT -d $DB_NAME -U $DB_USERNAME --no-password"
 export PG_WAIT="/wait-pg.sh $DB_NAME $DB_HOST $DB_PORT"
 export PSQL="psql -h $DB_HOST -p $DB_PORT -U $DB_USERNAME -d $DB_NAME --no-password"
+
+# In Linux, UID/GID mapping for `docker exec` fixes ownership/permission issues
+# for files written inside Docker container in such a way that the Docker host
+# user owns the files.
+CURRUSER=$(id -u):$(id -g)
+export CURRUSER
+
+print_and_run_cmd() {
+  echo "+ $*"
+  "$@"
+}
+
+docker_exec() {
+  local USER="$1"
+  shift
+  print_and_run_cmd docker exec -u "$USER" "$DOCKER_CONTAINER_NAME" sh -c "$@"
+}

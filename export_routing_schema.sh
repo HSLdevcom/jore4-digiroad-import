@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Stop on first error. Have meaningful error messages. Print each command to stdout.
-set -euxo pipefail
+set -euo pipefail
 
 # Source common environment variables.
 source "$(dirname "$0")/set_env_vars.sh"
@@ -13,10 +13,10 @@ source "$(dirname "$0")/set_env_vars.sh"
 docker start "$DOCKER_CONTAINER_NAME"
 
 # Wait for PostgreSQL server to be ready.
-$DOCKER_EXEC_POSTGRES "exec $PG_WAIT"
+docker_exec postgres "exec $PG_WAIT"
 
 # Create routing schema. pgRouting topology is created as well.
-$DOCKER_EXEC_POSTGRES "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/routing/create_routing_schema.sql -v source_schema=$DB_SCHEMA_NAME_DIGIROAD -v schema=$DB_SCHEMA_NAME_ROUTING"
+docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/routing/create_routing_schema.sql -v source_schema=$DB_SCHEMA_NAME_DIGIROAD -v schema=$DB_SCHEMA_NAME_ROUTING"
 
 DUMP_DIR="${WORK_DIR}/pgdump"
 DUMP_FILE_BASENAME="$(date "+%Y-%m-%d")_create_routing_schema_digiroad_r"
@@ -29,13 +29,13 @@ mkdir -p "$DUMP_DIR"
 # profile of map-matching backend where database migration scripts are bypassed.
 # All the table definitions are created and data populated in one shot based on
 # this dump.
-$DOCKER_EXEC_HOSTUSER "exec $PG_DUMP --clean --if-exists --no-owner -f /tmp/pgdump/$SQL_OUTPUT --schema=$DB_SCHEMA_NAME_ROUTING"
+docker_exec "$CURRUSER" "exec $PG_DUMP --clean --if-exists --no-owner -f /tmp/pgdump/$SQL_OUTPUT --schema=$DB_SCHEMA_NAME_ROUTING"
 
 # Add the license text at the beginning of the plain-language SQL dump, because
 # the data contained in the dump is derived from Digiroad's open data. Add text
 # starting at line 5 so that it doesn't interfere with GitHub workflows, which
 # determine the file type from the first few lines.
-$DOCKER_EXEC_HOSTUSER "\
+docker_exec "$CURRUSER" "\
 sed '5i\
 -- Digiroad data has been licensed with Creative Commons BY 4.0 license by the\\
 -- Finnish Transport Infrastructure Agency:\\
@@ -47,13 +47,13 @@ sed '5i\
 # custom format. With custom format, the restoration of schema and/or table
 # data items can be selectively filtered and applied by passing a toc list
 # (table of contents) file as an argument to `pg_restore` command.
-$DOCKER_EXEC_HOSTUSER "exec $PG_DUMP --format=c --clean --no-owner -f /tmp/pgdump/$PGDUMP_OUTPUT --schema=$DB_SCHEMA_NAME_ROUTING"
+docker_exec "$CURRUSER" "exec $PG_DUMP --format=c --clean --no-owner -f /tmp/pgdump/$PGDUMP_OUTPUT --schema=$DB_SCHEMA_NAME_ROUTING"
 
 # Dump a toc list file (for the generated pg_dump file) that lists the items
 # contained in the dump file. The list can be edited by re-ordering or
 # removing items that are not intended to be restored. That makes it possible
 # to e.g. restore data only for selected database tables.
-$DOCKER_EXEC_HOSTUSER "exec pg_restore --list \"/tmp/pgdump/${PGDUMP_OUTPUT}\" --file=\"/tmp/pgdump/${PGDUMP_OUTPUT}.list\""
+docker_exec "$CURRUSER" "exec pg_restore --list \"/tmp/pgdump/${PGDUMP_OUTPUT}\" --file=\"/tmp/pgdump/${PGDUMP_OUTPUT}.list\""
 
 # Derive additional toc lists for restoring data (and only data) for selected
 # tables. The additional tocs are created with current deployment scenarios of

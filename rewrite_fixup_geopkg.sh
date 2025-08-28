@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Stop on first error. Have meaningful error messages. Print each command to stdout.
-set -euxo pipefail
+set -euo pipefail
 
 # Source common environment variables.
 source "$(dirname "$0")/set_env_vars.sh"
@@ -10,13 +10,13 @@ source "$(dirname "$0")/set_env_vars.sh"
 docker start "$DOCKER_CONTAINER_NAME"
 
 # Wait for PostgreSQL server to be ready.
-$DOCKER_EXEC_POSTGRES "exec $PG_WAIT"
+docker_exec postgres "exec $PG_WAIT"
 
 OGR2OGR="exec ogr2ogr -f GPKG -overwrite /tmp/gpkg/fixup.gpkg $OGR2OGR_PG_REF"
 
-$DOCKER_EXEC_HOSTUSER "$OGR2OGR -nlt LINESTRINGZM -nln add_links -dim XYZM -sql \"SELECT * FROM fix_layer_link\""
-$DOCKER_EXEC_HOSTUSER "$OGR2OGR -nln add_stop_points -sql \"SELECT * FROM fix_layer_stop_point\""
-$DOCKER_EXEC_HOSTUSER "$OGR2OGR -nlt LINESTRINGZM -nln remove_links -dim XYZM -sql \"SELECT * FROM fix_layer_link_exclusion_geometry\""
+docker_exec "$CURRUSER" "$OGR2OGR -nlt LINESTRINGZM -nln add_links -dim XYZM -sql \"SELECT * FROM fix_layer_link\""
+docker_exec "$CURRUSER" "$OGR2OGR -nln add_stop_points -sql \"SELECT * FROM fix_layer_stop_point\""
+docker_exec "$CURRUSER" "$OGR2OGR -nlt LINESTRINGZM -nln remove_links -dim XYZM -sql \"SELECT * FROM fix_layer_link_exclusion_geometry\""
 
 # Stop Docker container.
 docker stop "$DOCKER_CONTAINER_NAME"
