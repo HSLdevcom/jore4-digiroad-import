@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Set correct working directory.
-CWD="$(cd "$(dirname "$0")" || exit; pwd -P)"
+CWD="$(dirname "$0")"
 export CWD
 export WORK_DIR="${CWD}/workdir"
 
