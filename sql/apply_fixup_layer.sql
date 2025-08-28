@@ -195,8 +195,8 @@ WHERE s.vaik_suunt IS NULL;
 UPDATE :schema.fix_layer_stop_point AS s
 SET sijainti_m = (
     SELECT
-        -- First, resolve the fraction (0..1), then multiply it by the 3D length of the link.
-        ST_LineLocatePoint(ST_Force2D(l.geom), s.geom) * ST_3DLength(l.geom) AS sijainti_m
+        -- First, resolve the fraction (0..1), then multiply it by the 2D length of the link.
+        ST_LineLocatePoint(ST_Force2D(l.geom), s.geom) * ST_Length(l.geom) AS sijainti_m
     FROM :schema.dr_linkki_fixup l
     WHERE l.link_id = s.link_id
 )
