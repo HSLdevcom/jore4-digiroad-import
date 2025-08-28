@@ -1094,6 +1094,92 @@ drl_fix AS (
 SELECT * FROM updates ORDER BY fid;
 
 
+-- Fix stop point locations.
+WITH
+drp_fix AS (
+    SELECT valtak_id, ST_GeomFromEWKT(new_location_ewkt) AS geom
+    FROM (
+        VALUES
+            (470519, 'SRID=3067;POINT(386431.1950465783 6673638.902324367)'), -- H0255, pystyyppi = 2 (Paikallisliikenne)
+            (317644, 'SRID=3067;POINT(386453.2087286834 6673607.795835562)')  -- H0256, pystyyppi = 2 (Paikallisliikenne)
+    ) AS t(valtak_id, new_location_ewkt)
+)
+-- SELECT valtak_id, ST_AsEWKT(geom) AS ewkt FROM drp_fix;
+, drp_fix_2 AS (
+    SELECT
+        row_number() OVER (
+            ORDER BY drp.matk_tunn, fix.valtak_id
+        ) AS rn,
+        fix.*,
+        drp.matk_tunn,
+        drp.yllapitaja,
+        drp.yllap_tunn,
+        drp.kuntakoodi,
+        drp.nimi_su,
+        drp.nimi_ru
+    FROM drp_fix fix
+    INNER JOIN :schema.dr_pysakki drp USING (valtak_id)
+)
+-- SELECT *, ST_AsEWKT(geom) AS ewkt FROM drp_fix_2;
+, inserts AS (
+    INSERT INTO :schema.fix_layer_stop_point (
+        fid,
+        internal_id,
+        valtak_id,
+        yllapitaja,
+        yllap_tunn,
+        matk_tunn,
+        kuntakoodi,
+        nimi_su,
+        nimi_ru,
+        geom
+    )
+    SELECT
+        generated_fid.n AS fid,
+        1000000000 + generated_fid.n AS internal_id,
+        valtak_id,
+        yllapitaja,
+        yllap_tunn,
+        matk_tunn,
+        kuntakoodi,
+        nimi_su,
+        nimi_ru,
+        geom
+    FROM drp_fix_2
+    CROSS JOIN LATERAL (
+        SELECT num_existing_stops.n + rn AS n
+        FROM (
+            SELECT coalesce(max(fid), 0) AS n
+            FROM :schema.fix_layer_stop_point
+        ) num_existing_stops
+    ) generated_fid
+    WHERE
+        valtak_id NOT IN (
+            SELECT valtak_id FROM :schema.fix_layer_stop_point
+        )
+    ORDER BY fid
+    RETURNING fid, valtak_id, matk_tunn, yllapitaja, yllap_tunn, geom
+)
+-- SELECT * FROM inserts;
+, updated_in_fix_layer_processing AS (
+    SELECT s.fid, f.valtak_id, s.matk_tunn, s.yllapitaja, s.yllap_tunn, s.link_id, s.vaik_suunt, s.sijainti_m, s.geom
+    FROM drp_fix_2 f
+    INNER JOIN :schema.fix_layer_stop_point s USING (valtak_id)
+    WHERE
+        s.link_id IS NOT NULL
+        OR s.vaik_suunt IS NOT NULL
+        OR s.sijainti_m IS NOT NULL
+)
+-- Returns the newly added rows as well as all rows that were updated when the
+-- fixup layer was reimported from GeoPackage file to the database for columns
+-- related to the infrastructure link.
+SELECT fid, valtak_id, matk_tunn, yllapitaja, yllap_tunn, NULL::text AS link_id, NULL::integer AS vaik_suunt, NULL::double precision AS sijainti_m, 'newly inserted' AS status, ST_AsEWKT(geom) AS ewkt
+FROM inserts
+UNION
+SELECT fid, valtak_id, matk_tunn, yllapitaja, yllap_tunn, link_id, vaik_suunt, sijainti_m, 'link-related fields updated' AS status, ST_AsEWKT(geom) AS ewkt
+FROM updated_in_fix_layer_processing;
+
+
 -- Move Digiroad stop points along splitted links to new target links.
 WITH
 drp_fix AS (
