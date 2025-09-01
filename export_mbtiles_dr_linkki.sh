@@ -28,9 +28,6 @@ MBTILES_OUTPUT_FILE="${OUTPUT_FILE_BASENAME}.mbtiles"
 # Start Docker container. The container is expected to exist and contain required database table to be exported.
 docker_start
 
-# Wait for PostgreSQL server to be ready.
-docker_exec postgres "exec $PG_WAIT"
-
 # Export pg_dump file from database.
 time docker_exec "$CURRUSER" "exec $PGSQL2SHP -f /tmp/mbtiles/shp_input/${SHP_OUTPUT_FILE} ${DB_NAME} ${DB_SCHEMA_NAME_MBTILES}.${DB_TABLE_NAME}"
 

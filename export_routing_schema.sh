@@ -12,9 +12,6 @@ source "$(dirname "$0")/set_env.sh"
 # populated from shapefiles.
 docker_start
 
-# Wait for PostgreSQL server to be ready.
-docker_exec postgres "exec $PG_WAIT"
-
 # Create routing schema. pgRouting topology is created as well.
 docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/routing/create_routing_schema.sql -v source_schema=$DB_SCHEMA_NAME_DIGIROAD -v schema=$DB_SCHEMA_NAME_ROUTING"
 
