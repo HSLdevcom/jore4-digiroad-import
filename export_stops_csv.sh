@@ -9,9 +9,6 @@ source "$(dirname "$0")/set_env.sh"
 # Start Docker container. The container is expected to exist and contain all the data to be exported.
 docker_start
 
-# Wait for PostgreSQL server to be ready.
-docker_exec postgres "exec $PG_WAIT"
-
 # Export csv file to output directory.
 OUTPUT_FILENAME="digiroad_stops.csv"
 

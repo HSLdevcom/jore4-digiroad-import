@@ -9,9 +9,6 @@ source "$(dirname "$0")/set_env.sh"
 # Start Docker container. The container is expected to exist and contain required database tables to be exported.
 docker_start
 
-# Wait for PostgreSQL server to be ready.
-docker_exec postgres "exec $PG_WAIT"
-
 OGR2OGR="exec ogr2ogr -f GPKG -overwrite /tmp/gpkg/fixup.gpkg $OGR2OGR_PG_REF"
 
 docker_exec "$CURRUSER" "$OGR2OGR -nlt LINESTRINGZM -nln add_links -dim XYZM -sql \"SELECT * FROM fix_layer_link\""

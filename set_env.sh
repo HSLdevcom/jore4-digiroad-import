@@ -38,6 +38,9 @@ export CURRUSER
 
 docker_start() {
   docker start "$DOCKER_CONTAINER_NAME"
+
+  # Wait for PostgreSQL server to be ready.
+  docker_exec postgres "exec $PG_WAIT"
 }
 
 docker_stop() {
