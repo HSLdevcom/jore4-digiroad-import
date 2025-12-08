@@ -12,6 +12,9 @@ on:
       - '**.md'
       - 'sql/routing/map-matching-*/**'
 
+permissions:
+  contents: read
+
 jobs:
   test-import-digiroad-export-routing-schema:
     name:
