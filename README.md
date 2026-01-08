@@ -169,9 +169,9 @@ By executing `export_routing_schema.sh`, a separate routing schema is created
 in the database. The data is read from the Digiroad schema and is transformed
 into a table structure defined in and used by the JORE4 map-matching backend.
 As a result, two database dump files will be created: one in SQL format, named
-`digiroad_r_routing_<date>.sql`, and another in PostgreSQL's custom format,
-named `digiroad_r_routing_<date>.pgdump`. Both files will be written into
-`workdir/pgdump` subdirectory.
+`digiroad_r_routing_<digiroad_release>_<date>.sql`, and another in PostgreSQL's
+custom format, named `digiroad_r_routing_<digiroad_release>_<date>.pgdump`. Both
+files will be written into `workdir/pgdump` subdirectory.
 
 The SQL dump artifact can be uploaded to Azure Blob Storage with the command
 below. An active Azure subscription associated with JORE4 is required. Azure CLI
@@ -241,8 +241,8 @@ run:
 ```
 
 This command reads selected data items from filtered public transport stop data
-imported from Digiroad and writes it to the _workdir/csv/digiroad_stops.csv_
-file.
+imported from Digiroad and writes it to the
+_workdir/csv/digiroad_stops_<digiroad_version>.csv_ file.
 
 ## Exporting vector tiles
 

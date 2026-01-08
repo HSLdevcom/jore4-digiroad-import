@@ -9,7 +9,7 @@ source "$(dirname "$0")/set_env.sh"
 # Start Docker container. The container is expected to exist and contain all the data to be exported.
 docker_start
 
-PGDUMP_OUTPUT="digiroad_r_$(date "+%Y-%m-%d").pgdump"
+PGDUMP_OUTPUT="digiroad_r_${DIGIROAD_IRROTUS_NRO}_$(date "+%Y-%m-%d").pgdump"
 OUTPUT_TABLES="dr_linkki dr_pysakki dr_kaantymisrajoitus"
 OUTPUT_TABLE_OPTIONS=$(echo "${OUTPUT_TABLES[@]}" | sed "s/dr_/-t ${DB_SCHEMA_NAME_DIGIROAD}.dr_/g")
 
