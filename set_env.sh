@@ -5,6 +5,11 @@ CWD="$(dirname "$0")"
 export CWD
 export WORK_DIR="${CWD}/workdir"
 
+export DIGIROAD_IRROTUS_NRO=""
+if [[ -f "$WORK_DIR/zip/digiroad_irrotus_nro.txt" ]]; then
+  DIGIROAD_IRROTUS_NRO=$(cat "$WORK_DIR/zip/digiroad_irrotus_nro.txt")
+fi
+
 # shapefile encoding
 export SHP_ENCODING="UTF-8"
 

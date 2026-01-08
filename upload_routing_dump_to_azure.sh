@@ -4,7 +4,7 @@
 # NB: Not all versions of Azure CLI seem to work for uploading the files, see the error message below for more info.
 
 # The target file is an SQL dump file for routing schema for current date.
-SQL_FILE="./workdir/pgdump/digiroad_r_routing_$(date "+%Y-%m-%d").sql"
+SQL_FILE="./workdir/pgdump/digiroad_r_routing_${DIGIROAD_IRROTUS_NRO}_$(date "+%Y-%m-%d").sql"
 
 if [[ ! -f "${SQL_FILE}" ]]; then
     echo "File to upload does not exist: ${SQL_FILE}"

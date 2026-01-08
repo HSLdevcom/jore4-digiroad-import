@@ -9,6 +9,7 @@ source "$(dirname "$0")/set_env.sh"
 AREA="UUSIMAA"
 
 SHP_URL="https://aineistot.vayla.fi/?path=ava/Tie/Digiroad/Aineistojulkaisut/latest/Maakuntajako_digiroad_R/${AREA}.zip"
+IRROTUS_NRO_URL="https://aineistot.vayla.fi/?path=ava/Tie/Digiroad/Aineistojulkaisut/latest/irrotus_nro.txt"
 
 DOWNLOAD_TARGET_DIR="${WORK_DIR}/zip"
 DOWNLOAD_TARGET_FILE="${DOWNLOAD_TARGET_DIR}/${AREA}_R.zip"
@@ -17,6 +18,12 @@ DOWNLOAD_TARGET_FILE="${DOWNLOAD_TARGET_DIR}/${AREA}_R.zip"
 if [[ ! -f "$DOWNLOAD_TARGET_FILE" ]]; then
   mkdir -p "$DOWNLOAD_TARGET_DIR"
   curl -Lo "$DOWNLOAD_TARGET_FILE" "$SHP_URL"
+
+  DIGIROAD_IRROTUS_NRO=$(curl -sL "$IRROTUS_NRO_URL")
+  if [[ ! -f "${DOWNLOAD_TARGET_DIR}/digiroad_${DIGIROAD_IRROTUS_NRO}.txt" ]]; then
+    echo $DIGIROAD_IRROTUS_NRO > "${DOWNLOAD_TARGET_DIR}/digiroad_${DIGIROAD_IRROTUS_NRO}.txt"
+  fi
+  echo $DIGIROAD_IRROTUS_NRO >| "${DOWNLOAD_TARGET_DIR}/digiroad_irrotus_nro.txt"
 fi
 
 SUB_AREAS="ITA-UUSIMAA UUSIMAA_1 UUSIMAA_2"

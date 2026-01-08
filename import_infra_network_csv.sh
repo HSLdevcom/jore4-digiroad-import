@@ -20,6 +20,6 @@ PGPASSWORD="${PGPASSWORD:-adminpassword}"
 source "$(dirname "$0")/set_env.sh"
 
 # Import dump from csv file.
-INPUT_FILENAME="infra_network_digiroad.csv"
+INPUT_FILENAME="infra_network_digiroad_${DIGIROAD_IRROTUS_NRO}.csv"
 PGPASSWORD="$PGPASSWORD" psql -h "$PGHOSTNAME" -p "$PGPORT" -U "$PGUSERNAME" -d "$PGDATABASE" \
   -v ON_ERROR_STOP=1 -f "$CWD"/sql/import_infra_links_from_csv.sql -v csvfile="${WORK_DIR}/csv/${INPUT_FILENAME}"
