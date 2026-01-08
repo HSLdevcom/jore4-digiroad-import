@@ -2,3 +2,4 @@ workdir
 .DS_Store
 docker/*
 !docker/docker-compose.custom.yml
+.idea

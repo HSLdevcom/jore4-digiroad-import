@@ -10,7 +10,7 @@ source "$(dirname "$0")/set_env.sh"
 docker_start
 
 # Export CSV file to output directory.
-OUTPUT_FILENAME="infra_network_digiroad.csv"
+OUTPUT_FILENAME="infra_network_digiroad_${DIGIROAD_IRROTUS_NRO}.csv"
 
 mkdir -p "${WORK_DIR}/csv"
 
