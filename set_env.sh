@@ -36,11 +36,71 @@ export PSQL="psql -h $DB_HOST -p $DB_PORT -U $DB_USERNAME -d $DB_NAME --no-passw
 CURRUSER=$(id -u):$(id -g)
 export CURRUSER
 
-docker_start() {
-  docker start "$DOCKER_CONTAINER_NAME"
+docker_kill() {
+  # Remove possibly running/existing Docker container.
+  docker kill "$DOCKER_CONTAINER_NAME" &> /dev/null || true
+  docker rm -v "$DOCKER_CONTAINER_NAME" &> /dev/null || true
+}
 
-  # Wait for PostgreSQL server to be ready.
+docker_pg_wait() {
+  # Wait for PostgreSQL to be ready to accept connections.
   docker_exec postgres "exec $PG_WAIT"
+}
+
+docker_run() {
+  local SHP_FILE_DIR="${1:-}"
+
+  # If container already exists, just (re)start it.
+  if docker container inspect "$DOCKER_CONTAINER_NAME" >/dev/null 2>&1; then
+    docker_start
+    return 0
+  fi
+
+  if [[ -z "$SHP_FILE_DIR" ]]; then
+    echo "Missing argument: SHP_FILE_DIR"
+    echo "Usage: docker_run <path-to-shapefiles-dir>"
+    return 1
+  fi
+
+  if [[ ! -d "$SHP_FILE_DIR" ]]; then
+    echo "SHP_FILE_DIR does not exist or is not a directory: $SHP_FILE_DIR"
+    return 1
+  fi
+
+  # Create directories that will be mounted to Docker container.
+  mkdir -p "$WORK_DIR"/csv
+  mkdir -p "$WORK_DIR"/mbtiles
+  mkdir -p "$WORK_DIR"/pgdump
+
+  # Create and start new Docker container. Mount all directories as volumes that
+  # are needed by various processing scripts.
+  docker run \
+    --name "$DOCKER_CONTAINER_NAME" \
+    -p 127.0.0.1:${DOCKER_CONTAINER_PORT}:5432 \
+    -e POSTGRES_HOST_AUTH_METHOD=trust \
+    -v "$CWD"/fixup/digiroad:/tmp/gpkg \
+    -v "$CWD"/sql:/tmp/sql \
+    -v "$SHP_FILE_DIR":/tmp/shp \
+    -v "$WORK_DIR"/csv:/tmp/csv \
+    -v "$WORK_DIR"/mbtiles:/tmp/mbtiles \
+    -v "$WORK_DIR"/pgdump:/tmp/pgdump \
+    -d "$DOCKER_IMAGE"
+
+  docker_pg_wait
+}
+
+docker_start() {
+  if ! docker container inspect "$DOCKER_CONTAINER_NAME" >/dev/null 2>&1; then
+    echo "Docker container $DOCKER_CONTAINER_NAME does not exist. Call docker_run first."
+    return 1
+  fi
+
+  # Only start if not already running (safe to call repeatedly).
+  if ! docker container inspect -f '{{.State.Running}}' "$DOCKER_CONTAINER_NAME" 2>/dev/null | grep -q '^true$'; then
+    docker start "$DOCKER_CONTAINER_NAME"
+  fi
+
+  docker_pg_wait
 }
 
 docker_stop() {
