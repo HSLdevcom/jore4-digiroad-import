@@ -44,30 +44,10 @@ rm -fr "${DOWNLOAD_TARGET_DIR:?}/${AREA}"
 unzip -u "$DOWNLOAD_TARGET_FILE" Dokumentit/* -d "$DOWNLOAD_TARGET_DIR"
 
 # Remove possibly running/existing Docker container.
-docker kill "$DOCKER_CONTAINER_NAME" &> /dev/null || true
-docker rm -v "$DOCKER_CONTAINER_NAME" &> /dev/null || true
+docker_kill
 
-# Create directories that will be mounted to Docker container.
-mkdir -p "$WORK_DIR"/csv
-mkdir -p "$WORK_DIR"/mbtiles
-mkdir -p "$WORK_DIR"/pgdump
-
-# Create and start new Docker container. Mount all directories as volumes that
-# are needed by various processing scripts.
-docker run \
-  --name "$DOCKER_CONTAINER_NAME" \
-  -p 127.0.0.1:${DOCKER_CONTAINER_PORT}:5432 \
-  -e POSTGRES_HOST_AUTH_METHOD=trust \
-  -v "$CWD"/fixup/digiroad:/tmp/gpkg \
-  -v "$CWD"/sql:/tmp/sql \
-  -v "$SHP_FILE_DIR":/tmp/shp \
-  -v "$WORK_DIR"/csv:/tmp/csv \
-  -v "$WORK_DIR"/mbtiles:/tmp/mbtiles \
-  -v "$WORK_DIR"/pgdump:/tmp/pgdump \
-  -d "$DOCKER_IMAGE"
-
-# Wait for PostgreSQL server to be ready.
-docker_exec postgres "exec $PG_WAIT"
+# Create and start new Docker container.
+docker_run "$SHP_FILE_DIR"
 
 # Create digiroad import schema into database.
 docker_exec postgres "exec $PSQL -nt -c \"CREATE SCHEMA ${DB_SCHEMA_NAME_DIGIROAD};\""

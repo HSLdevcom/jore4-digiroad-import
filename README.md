@@ -40,7 +40,7 @@ of the Docker container by running:
 ```
 
 The shapefiles are, by default, imported into a database schema named `digiroad`.
-The schema name can be changed in `set_env_vars.sh` script.
+The schema name can be changed in `set_env.sh` script.
 
 Within the script execution further processing for Digiroad data is done as well.
 
@@ -259,6 +259,32 @@ exported with (assuming Digiroad shapefiles have already been imported):
 ```sh
 ./export_mbtiles_dr_pysakki.sh
 ```
+
+## Import MML tram network
+
+1. Download MML's tram network from their website:
+- [Lataa paikkatietoaineistoja](https://asiointi.maanmittauslaitos.fi/karttapaikka/tiedostopalvelu?lang=fi)
+  - Maastotietokanta
+    - Valitse tiedostomuoto: ```GeoPackage**```
+    - Piirrä oma alue
+      - valitse teema: ```Raideliikenne```
+    - Lisää ostoskoriin
+    - Download via the download link in the email you receive once the download is available.
+
+2. Open the GeoPackage file in QGIS (drag to Layers)
+2. Open Python console
+3. Open the ```generate-tram-infralinks-from-qgis.py``` file into the Python File viewer
+4. Select the MML GeoPackage layer
+5. Run the python script
+
+    The sql containing the infra links, insertable to the database, can be found in ```/tmp/tram_infraLinks.sql```. Leave it there or copy to ```sql/```.
+
+6. run ```export_mbtiles_tram_links.sh``` with the date the tram link material was obtained on:
+```sh
+  ./export_mbtiles_tram_links.sh 2026-01-28
+```
+
+8. upload the ```sql/tram_infralinks.sql``` and ```workdir/mbtiles/tram_links_<MML_TRAM_IMPORT_DATE>_<today>.mbtiles``` to blob storage ```stjore4dev001 / jore4-ui```
 
 ## License
 
