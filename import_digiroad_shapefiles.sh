@@ -17,9 +17,27 @@ DOWNLOAD_TARGET_FILE="${DOWNLOAD_TARGET_DIR}/${AREA}_R.zip"
 # Load zip file containing Digiroad shapefiles if it does not exist.
 if [[ ! -f "$DOWNLOAD_TARGET_FILE" ]]; then
   mkdir -p "$DOWNLOAD_TARGET_DIR"
-  curl -Lo "$DOWNLOAD_TARGET_FILE" "$SHP_URL"
+  COOKIE_JAR="${DOWNLOAD_TARGET_DIR}/curl.cookies"
+  set +e
+  output=$(curl -L -c "$COOKIE_JAR" -b "$COOKIE_JAR" -o "$DOWNLOAD_TARGET_FILE" "$SHP_URL" 2>&1)
+  exit_code=$?
 
-  DIGIROAD_IRROTUS_NRO=$(curl -sL "$IRROTUS_NRO_URL")
+  if [[ $exit_code -ne 0 ]]; then
+    rm $COOKIE_JAR
+    echo "Error downloading shapefile zip file from $SHP_URL. Curl exit code: $exit_code"
+    exit $exit_code
+  fi
+
+
+  DIGIROAD_IRROTUS_NRO=$(curl -sL -c "$COOKIE_JAR" -b "$COOKIE_JAR" "$IRROTUS_NRO_URL" 2>&1)
+  exit_code=$?
+  rm $COOKIE_JAR
+  set -e
+  if [[ $exit_code -ne 0 ]]; then
+    echo "Error downloading irrotus_nro file from $IRROTUS_NRO_URL. Curl exit code: $exit_code"
+    exit $exit_code
+  fi
+
   if [[ ! -f "${DOWNLOAD_TARGET_DIR}/digiroad_${DIGIROAD_IRROTUS_NRO}.txt" ]]; then
     echo $DIGIROAD_IRROTUS_NRO > "${DOWNLOAD_TARGET_DIR}/digiroad_${DIGIROAD_IRROTUS_NRO}.txt"
   fi

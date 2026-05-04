@@ -19,7 +19,7 @@ az account set --subscription "jore4"
 if ! time az storage azcopy blob upload \
   --source "${SQL_FILE}" \
   --recursive \
-  --account-name "jore4storage" \
+  --account-name "stjore4dev001" \
   --auth-mode "login" \
   --container "jore4-digiroad"; then
     cat <<EOF
@@ -27,7 +27,7 @@ if ! time az storage azcopy blob upload \
 Upload failed. Please make sure that you have installed a version of Azure CLI, which is known to work
 (e.g. 2.29.2, may require downgrade).
 
-Alternatively you may perform the upload manually in the azure portal (storage account "jore4storage", container
+Alternatively you may perform the upload manually in the azure portal (storage account "stjore4dev001", container
 "jore4-digiroad").
 EOF
     exit 2
@@ -36,6 +36,6 @@ fi
 # List all artifacts inside `jore4-digiroad` in blob storage container.
 az storage blob list \
   --container-name "jore4-digiroad" \
-  --account-name "jore4storage" \
+  --account-name "stjore4dev001" \
   --auth-mode "login" \
   --query "[].name"
