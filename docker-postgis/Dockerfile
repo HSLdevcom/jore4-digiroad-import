@@ -1,4 +1,4 @@
-FROM postgis/postgis:15-master
+FROM postgis/postgis:18-master
 
 ENV TZ=Europe/Helsinki
 
