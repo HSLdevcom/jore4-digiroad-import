@@ -1,6 +1,6 @@
 -- Add internal ID for SQL view. Values will be derived from the primary key of GeoPackage layer
 -- (`fid`).
-ALTER TABLE :schema.fix_layer_link ADD COLUMN internal_id int;
+ALTER TABLE :schema.fix_layer_link ADD COLUMN internal_id bigint;
 
 -- Force separate ID value spaces for custom fixup links.
 -- 

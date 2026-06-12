@@ -47,7 +47,11 @@ WHERE
 ALTER TABLE :schema.dr_linkki_out RENAME column gid TO id;
 
 -- Replace input table with transformed output.
-DROP TABLE :schema.dr_linkki;
+--DROP TABLE :schema.dr_linkki;
+DROP TABLE IF EXISTS :schema.dr_linkki_orig;
+ALTER TABLE :schema.dr_linkki RENAME TO dr_linkki_orig;
+ALTER TABLE :schema.dr_linkki_orig DROP CONSTRAINT IF EXISTS dr_linkki_pkey;
+ALTER TABLE :schema.dr_linkki_orig ADD CONSTRAINT dr_linkki_orig_pkey PRIMARY KEY (gid);
 ALTER TABLE :schema.dr_linkki_out RENAME TO dr_linkki;
 
 -- Add data integrity constraints.

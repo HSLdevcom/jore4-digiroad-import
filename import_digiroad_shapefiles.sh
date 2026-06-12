@@ -6,6 +6,14 @@ set -euo pipefail
 # Source common environment variables and functions.
 source "$(dirname "$0")/set_env.sh"
 
+TRAM_INFRALINKS_SQL="sql/tram_infraLinks.sql"
+TRAM_INFRALINKS_SQL_LOCAL="${CWD}/${TRAM_INFRALINKS_SQL}"
+if [[ ! -f "$TRAM_INFRALINKS_SQL_LOCAL" ]]; then
+  echo "Required tram infralink SQL file does not exist: $TRAM_INFRALINKS_SQL_LOCAL" >&2
+  exit 1
+fi
+TRAM_INFRALINKS_SQL_DOCKER="/tmp/$TRAM_INFRALINKS_SQL"
+
 AREA="UUSIMAA"
 
 SHP_URL="https://aineistot.vayla.fi/?path=ava/Tie/Digiroad/Aineistojulkaisut/latest/Maakuntajako_digiroad_R/${AREA}.zip"
@@ -106,6 +114,15 @@ docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_pys
 
 # Create SQL views combining Digiroad links and public transport stops with fixup layers from GeoPackage file.
 docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/apply_fixup_layer.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
+
+# Import HSL tram infrastructure links. These are loaded separately from Digiroad
+# links so that the GeoPackage fixup layer applies to Digiroad (bus) links only.
+# `pgcrypto` provides `gen_random_uuid()` referenced by the staging table.
+docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto;'"
+docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f $TRAM_INFRALINKS_SQL_DOCKER"
+
+# Transform tram links into the Digiroad schema (reproject to EPSG:3067).
+docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_tram_links.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
 
 # Process turn restrictions and filter properties in database.
 docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_kaantymisrajoitus.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"

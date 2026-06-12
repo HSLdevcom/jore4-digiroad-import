@@ -27,7 +27,12 @@ ALTER TABLE :schema.dr_pysakki_out
 ALTER TABLE :schema.dr_pysakki_out RENAME COLUMN gid TO id;
 
 -- Replace input table with transformed output.
-DROP TABLE :schema.dr_pysakki;
+DROP TABLE IF EXISTS :schema.dr_pysakki_orig;
+-- Drop the primary key created by shp2pgsql so its index name does not
+-- conflict with the constraint we add below after the rename.
+ALTER TABLE :schema.dr_pysakki DROP CONSTRAINT IF EXISTS dr_pysakki_pkey;
+ALTER TABLE :schema.dr_pysakki RENAME TO dr_pysakki_orig;
+ALTER TABLE :schema.dr_pysakki_orig ADD CONSTRAINT dr_pysakki_orig_pkey PRIMARY KEY (gid);
 ALTER TABLE :schema.dr_pysakki_out RENAME TO dr_pysakki;
 
 -- Add data integrity constraints.

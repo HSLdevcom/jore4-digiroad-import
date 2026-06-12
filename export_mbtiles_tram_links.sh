@@ -72,7 +72,7 @@ time docker_exec "$CURRUSER" \
       external_link_id AS link_id,\
       ST_Force2D(shape::geometry) AS geom \
     FROM infrastructure_network.infrastructure_link \
-    WHERE external_link_source = 'temp_hsl_tram'\" \
+    WHERE external_link_source = 'hsl_tram'\" \
   -nln $MBTILES_LAYER_NAME"
 
 # Convert from GeoJSON to MBTiles.
