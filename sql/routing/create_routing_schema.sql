@@ -46,7 +46,8 @@ COMMENT ON COLUMN :schema.infrastructure_source.infrastructure_source_name IS
 INSERT INTO :schema.infrastructure_source (infrastructure_source_id, infrastructure_source_name, description) VALUES
     (1, 'digiroad_r_mml', 'Infrastructure links from the MML Maastotietokanta. The data is from the Digiroad R export and has been made available by Finnish Transport Infrastructure Agency (https://vayla.fi)'),
     (2, 'digiroad_r_supplementary', 'Digiroad''s supplementary infrastructure links. The data is from the Digiroad R export and has been made available by Finnish Transport Infrastructure Agency (https://vayla.fi)'),
-    (100, 'hsl_fixup', 'HSL''s infrastructure link and stop point customisations on top of Digiroad infrastructure network');
+    (100, 'hsl_fixup', 'HSL''s infrastructure link and stop point customisations on top of Digiroad infrastructure network'),
+    (200, 'hsl_tram', 'HSL''s tram infrastructure links derived from the MML tram network');
 
 --
 -- Import infrastructure links
@@ -88,7 +89,24 @@ WHERE
     -- 15, -- Erikoiskuljetusyhteys puomilla
        21, -- Lossi
        99  -- Ei tietoa (esiintyy vain rakenteilla olevilla tielinkeillä)
-    );
+    )
+UNION ALL
+-- Tram infrastructure links from the HSL tram network. These are imported
+-- separately from Digiroad links and are therefore not affected by the
+-- GeoPackage fixup layer, which applies to Digiroad (bus) links only.
+SELECT
+    t.id::bigint AS infrastructure_link_id,
+    isrc.infrastructure_source_id,
+    t.link_id::text AS external_link_id,
+    dir.traffic_flow_direction_type,
+    NULL AS municipality_code,
+    NULL AS external_link_type,
+    3 AS external_link_state,
+    NULL AS name,
+    ST_Force3D(t.geom) AS geom_3d
+FROM :source_schema.hsl_tram_linkki t
+INNER JOIN :schema.traffic_flow_direction dir ON dir.traffic_flow_direction_type = t.ajosuunta
+INNER JOIN :schema.infrastructure_source isrc ON isrc.infrastructure_source_name = 'hsl_tram';
 
 COMMENT ON TABLE :schema.infrastructure_link IS
     'The infrastructure links, e.g. road or rail elements: https://www.transmodel-cen.eu/model/index.htm?goto=2:1:1:1:453';
@@ -181,32 +199,38 @@ CREATE INDEX ON :schema.infrastructure_link_safely_traversed_by_vehicle_type (ve
 INSERT INTO :schema.infrastructure_link_safely_traversed_by_vehicle_type (infrastructure_link_id, vehicle_type)
     SELECT lnk.infrastructure_link_id, 'generic_bus'
     FROM :schema.infrastructure_link lnk
-    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id::int
+    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id
     WHERE src_lnk.is_generic_bus = true
 UNION
     SELECT lnk.infrastructure_link_id, 'tall_electric_bus'
     FROM :schema.infrastructure_link lnk
-    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id::int
+    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id
     WHERE src_lnk.is_tall_electric_bus = true
 UNION
     SELECT lnk.infrastructure_link_id, 'generic_tram'
     FROM :schema.infrastructure_link lnk
-    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id::int
+    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id
     WHERE src_lnk.is_tram = true
+UNION
+    -- Tram links imported from the HSL tram network are traversable by trams.
+    SELECT lnk.infrastructure_link_id, 'generic_tram'
+    FROM :schema.infrastructure_link lnk
+    INNER JOIN :schema.infrastructure_source isrc ON isrc.infrastructure_source_id = lnk.infrastructure_source_id
+    WHERE isrc.infrastructure_source_name = 'hsl_tram'
 UNION
     SELECT lnk.infrastructure_link_id, 'generic_train'
     FROM :schema.infrastructure_link lnk
-    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id::int
+    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id
     WHERE src_lnk.is_train = true
 UNION
     SELECT lnk.infrastructure_link_id, 'generic_metro'
     FROM :schema.infrastructure_link lnk
-    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id::int
+    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id
     WHERE src_lnk.is_metro = true
 UNION
     SELECT lnk.infrastructure_link_id, 'generic_ferry'
     FROM :schema.infrastructure_link lnk
-    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id::int
+    INNER JOIN :source_schema.dr_linkki_fixup src_lnk ON src_lnk.id = lnk.infrastructure_link_id
     WHERE src_lnk.is_ferry = true;
 
 --

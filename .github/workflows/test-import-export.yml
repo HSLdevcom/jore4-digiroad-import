@@ -27,6 +27,11 @@ jobs:
       - name: Build Docker image
         run: ${{ github.workspace }}/build_docker_image.sh
 
+      - name: Fetch tram infrastructure link dump
+        shell: bash
+        run: |
+          curl https://stjore4dev001.blob.core.windows.net/jore4-ui/tram_infraLinks_2026-01-28_2026-06-15.sql -o sql/tram_infraLinks.sql
+
       - name: Import Digiroad shapefiles
         run: ${{ github.workspace }}/import_digiroad_shapefiles.sh
 
