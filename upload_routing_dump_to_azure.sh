@@ -3,6 +3,9 @@
 # Azure CLI is required to be installed.
 # NB: Not all versions of Azure CLI seem to work for uploading the files, see the error message below for more info.
 
+# Source common environment variables and functions.
+source "$(dirname "$0")/set_env.sh"
+
 # The target file is an SQL dump file for routing schema for current date.
 SQL_FILE="./workdir/pgdump/digiroad_r_routing_${DIGIROAD_IRROTUS_NRO}_$(date "+%Y-%m-%d").sql"
 

@@ -42,8 +42,6 @@ of the Docker container by running:
 The shapefiles are, by default, imported into a database schema named `digiroad`.
 The schema name can be changed in `set_env.sh` script.
 
-Within the script execution further processing for Digiroad data is done as well.
-
 ## JORE4 fix layer on top of Digiroad links (a.k.a. _QGIS fixup layer_)
 
 The JORE4 project involves a infrastructure "fixup layer" in the form of a QGIS project. The QGIS
@@ -136,6 +134,41 @@ If you have made changes to the _JORE4 fix layer_ by altering the table metadata
 ./rewrite_fixup_geopkg.sh
 ```
 
+## Import MML tram network
+
+1. Download MML's tram network from their website:
+- [Lataa paikkatietoaineistoja](https://asiointi.maanmittauslaitos.fi/karttapaikka/tiedostopalvelu?lang=fi)
+  - Maastotietokanta
+    - Valitse tiedostomuoto: ```GeoPackage**```
+    - Piirrä oma alue
+      - valitse teema: ```Raideliikenne```
+    - Lisää ostoskoriin
+    - Download via the download link in the email you receive once the download is available.
+
+2. Open the GeoPackage file in QGIS (drag to Layers)
+3. Open Python console
+4. Open the ```generate-tram-infralinks-from-qgis.py``` file into the Python File viewer
+5. Select the MML GeoPackage layer
+6. Run the python script
+
+    The sql containing the infra links, insertable to the database, can be found in ```/tmp/tram_infraLinks_<date>.sql```. Leave it there or copy to ```sql/```.
+
+7. run ```export_mbtiles_tram_links.sh``` with the MML_TRAM_IMPORT_DATE date the tram link material was obtained on:
+```sh
+  ./export_mbtiles_tram_links.sh <mml_date>
+```
+
+8. upload the ```sql/tram_infralinks_<date>.sql``` and ```workdir/mbtiles/tram_links_<MML_TRAM_IMPORT_DATE>_<today>.mbtiles``` to blob storage ```stjore4dev001 / jore4-ui```
+
+## Finalizing import
+
+After finalizing the fixup layer, further processing for Digiroad data needs to be run:
+
+```sh
+./apply_fixup_layer_and_process_links.sh
+```
+
+
 ## Exporting Digiroad data
 
 ```sh
@@ -165,13 +198,18 @@ JORE4 database.
 One can export the schema definitions and/or table data for [JORE4 navigation
 and map-matching backend](https://github.com/HSLdevcom/jore4-map-matching).
 
-By executing `export_routing_schema.sh`, a separate routing schema is created
+By executing
+```sh
+./export_routing_schema.sh <mml_date>
+```
+a separate routing schema is created
 in the database. The data is read from the Digiroad schema and is transformed
 into a table structure defined in and used by the JORE4 map-matching backend.
 As a result, two database dump files will be created: one in SQL format, named
-`digiroad_r_routing_<digiroad_release>_<date>.sql`, and another in PostgreSQL's
-custom format, named `digiroad_r_routing_<digiroad_release>_<date>.pgdump`. Both
-files will be written into `workdir/pgdump` subdirectory.
+`<date>_create_routing_schema_digiroad_r_<digiroad_release>_mml_<mml_date>.sql`,
+and another in PostgreSQL's custom format, named
+`<date>_create_routing_schema_digiroad_r_<digiroad_release>_mml_<mml_date>.pgdump`.
+Both files will be written into `workdir/pgdump` subdirectory.
 
 The SQL dump artifact can be uploaded to Azure Blob Storage with the command
 below. An active Azure subscription associated with JORE4 is required. Azure CLI
@@ -190,11 +228,11 @@ only.
 
 The table below describes the contents of each toc file generated.
 
-| ToC file                                                                  | Description                              |
-| ------------------------------------------------------------------------- | -----------------------------------------|
-| `<date>_create_routing_schema_digiroad_r.pgdump.list`                     | Contains entire routing schema and data. |
-| `<date>_create_routing_schema_digiroad_r.no-enums.links-and-stops.list`   | No schema item definitions at all. Contains table data for infrastructure links, topology and public transport stops. Does not include data for enum tables which is already included in the database migration scripts of the map-matching backend. |
-| `<date>_create_routing_schema_digiroad_r.pgdump.no-enums.only-links.list` | No schema item definitions at all. Contains table data for infrastructure links and topology. Does not include public transport stops. Does not include data for enum tables which is already included in the database migration scripts of the map-matching backend. |
+| ToC file                                                                                                    | Description                              |
+| ----------------------------------------------------------------------------------------------------------- | -----------------------------------------|
+| `<date>_create_routing_schema_digiroad_r_<digiroad_release>_mml_<mml_date>.pgdump.list`                     | Contains entire routing schema and data. |
+| `<date>_create_routing_schema_digiroad_r_<digiroad_release>_mml_<mml_date>.no-enums.links-and-stops.list`   | No schema item definitions at all. Contains table data for infrastructure links, topology and public transport stops. Does not include data for enum tables which is already included in the database migration scripts of the map-matching backend. |
+| `<date>_create_routing_schema_digiroad_r_<digiroad_release>_mml_<mml_date>.pgdump.no-enums.only-links.list` | No schema item definitions at all. Contains table data for infrastructure links and topology. Does not include public transport stops. Does not include data for enum tables which is already included in the database migration scripts of the map-matching backend. |
 
 Which one should be used will depend on what deployment strategy with regard to
 database migrations and data population is currently chosen in the map-matching
@@ -208,7 +246,7 @@ The target database is required to have `postgis` and `pgrouting` extensions.
 To export a CSV containing intrastructure network links' data, run:
 
 ```sh
-./export_infra_network_csv.sh
+./export_infra_network_csv.sh <mml_date>
 ```
 
 You may import this CSV data into an existing database adhering to JORE4 schema,
@@ -259,32 +297,6 @@ exported with (assuming Digiroad shapefiles have already been imported):
 ```sh
 ./export_mbtiles_dr_pysakki.sh
 ```
-
-## Import MML tram network
-
-1. Download MML's tram network from their website:
-- [Lataa paikkatietoaineistoja](https://asiointi.maanmittauslaitos.fi/karttapaikka/tiedostopalvelu?lang=fi)
-  - Maastotietokanta
-    - Valitse tiedostomuoto: ```GeoPackage**```
-    - Piirrä oma alue
-      - valitse teema: ```Raideliikenne```
-    - Lisää ostoskoriin
-    - Download via the download link in the email you receive once the download is available.
-
-2. Open the GeoPackage file in QGIS (drag to Layers)
-2. Open Python console
-3. Open the ```generate-tram-infralinks-from-qgis.py``` file into the Python File viewer
-4. Select the MML GeoPackage layer
-5. Run the python script
-
-    The sql containing the infra links, insertable to the database, can be found in ```/tmp/tram_infraLinks.sql```. Leave it there or copy to ```sql/```.
-
-6. run ```export_mbtiles_tram_links.sh``` with the date the tram link material was obtained on:
-```sh
-  ./export_mbtiles_tram_links.sh 2026-01-28
-```
-
-8. upload the ```sql/tram_infralinks.sql``` and ```workdir/mbtiles/tram_links_<MML_TRAM_IMPORT_DATE>_<today>.mbtiles``` to blob storage ```stjore4dev001 / jore4-ui```
 
 ## License
 

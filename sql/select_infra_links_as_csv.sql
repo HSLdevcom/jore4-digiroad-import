@@ -31,5 +31,15 @@ COPY (
            21, -- Lossi
            99  -- Ei tietoa (esiintyy vain rakenteilla olevilla tielinkeillä)
         )
+    UNION ALL
+    SELECT
+        source.external_link_id,
+        source.external_link_source,
+        ST_AsGeoJSON(source.shape)::jsonb as shape,
+        'bidirectional' AS direction,
+        ST_Length(source.shape) as estimated_length_in_metres
+    FROM :schema.infrastructure_network.infrastructure_link source
+    WHERE
+        source.external_link_source IN ('temp_hsl_tram', 'hsl_tram')
 
 ) TO STDOUT WITH (FORMAT CSV, HEADER)
