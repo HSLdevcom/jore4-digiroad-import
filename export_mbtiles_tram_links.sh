@@ -19,14 +19,14 @@ if [[ "${1:-}" == "" ]]; then
 fi
 
 MML_TRAM_IMPORT_DATE="$1"
-
 if [[ ! "$MML_TRAM_IMPORT_DATE" =~ ^20[2-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$ ]]; then
   echo "Invalid date: $MML_TRAM_IMPORT_DATE"
   usage
   exit 1
 fi
 
-MBTILES_MAX_ZOOM_LEVEL=17
+TRAM_SQL_FILE="tram_infraLinks_${MML_TRAM_IMPORT_DATE}.sql"
+MBTILES_MAX_ZOOM_LEVEL=18
 MBTILES_LAYER_NAME=$DB_TABLE_NAME
 MBTILES_DESCRIPTION="Tram track links"
 
@@ -43,24 +43,24 @@ OUTPUT_FILE_BASENAME="${DB_TABLE_NAME}_${MML_TRAM_IMPORT_DATE}_$(date "+%Y-%m-%d
 GEOJSON_OUTPUT_FILE="${OUTPUT_FILE_BASENAME}.geojson"
 MBTILES_OUTPUT_FILE="${OUTPUT_FILE_BASENAME}.mbtiles"
 
-if [ ! -f "${SQL_INPUT_DIR}/tram_infraLinks.sql" ]; then
-  if [ ! -f "/tmp/tram_infraLinks.sql" ]; then
-    echo "Expected SQL file for processing tram links does not exist: /tmp/tram_infraLinks.sql"
+if [ ! -f "${SQL_INPUT_DIR}/${TRAM_SQL_FILE}" ]; then
+  if [ ! -f "/tmp/${TRAM_SQL_FILE}" ]; then
+    echo "Expected SQL file for processing tram links does not exist: /tmp/${TRAM_SQL_FILE}"
     exit 1
   fi
-  print_and_run_cmd mv "/tmp/tram_infraLinks.sql" "${SQL_INPUT_DIR}/tram_infraLinks.sql"
+  print_and_run_cmd mv "/tmp/${TRAM_SQL_FILE}" "${SQL_INPUT_DIR}/${TRAM_SQL_FILE}"
 else
-  echo "Using existing file: ${SQL_INPUT_DIR}/tram_infraLinks.sql"
+  echo "Using existing file: ${SQL_INPUT_DIR}/${TRAM_SQL_FILE}"
 fi
 
-print_and_run_cmd docker_kill
+#print_and_run_cmd docker_stop
 print_and_run_cmd docker_run "${WORK_DIR}/shp"
 
 # install pgcrypto extension for generating UUIDs
 time docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto;'"
 
 # import tram infra links
-time print_and_run_cmd docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/tram_infraLinks.sql"
+time print_and_run_cmd docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/${TRAM_SQL_FILE}"
 
 # Export filtered links directly from PostGIS to GeoJSON.
 rm -f "${GEOJSON_OUTPUT_DIR}/$GEOJSON_OUTPUT_FILE"

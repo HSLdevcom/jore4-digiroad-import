@@ -6,14 +6,6 @@ set -euo pipefail
 # Source common environment variables and functions.
 source "$(dirname "$0")/set_env.sh"
 
-TRAM_INFRALINKS_SQL="sql/tram_infraLinks.sql"
-TRAM_INFRALINKS_SQL_LOCAL="${CWD}/${TRAM_INFRALINKS_SQL}"
-if [[ ! -f "$TRAM_INFRALINKS_SQL_LOCAL" ]]; then
-  echo "Required tram infralink SQL file does not exist: $TRAM_INFRALINKS_SQL_LOCAL" >&2
-  exit 1
-fi
-TRAM_INFRALINKS_SQL_DOCKER="/tmp/$TRAM_INFRALINKS_SQL"
-
 AREA="UUSIMAA"
 
 SHP_URL="https://aineistot.vayla.fi/?path=ava/Tie/Digiroad/Aineistojulkaisut/latest/Maakuntajako_digiroad_R/${AREA}.zip"
@@ -37,7 +29,8 @@ if [[ ! -f "$DOWNLOAD_TARGET_FILE" ]]; then
   fi
 
 
-  DIGIROAD_IRROTUS_NRO=$(curl -sL -c "$COOKIE_JAR" -b "$COOKIE_JAR" "$IRROTUS_NRO_URL" 2>&1)
+  DIGIROAD_IRROTUS_NRO=$(curl -sL -c "$COOKIE_JAR" -b "$COOKIE_JAR" "$IRROTUS_NRO_URL" 2>&1 | tr '_' '-')
+
   exit_code=$?
   rm $COOKIE_JAR
   set -e
@@ -93,42 +86,6 @@ for SUB_AREA_SHP_TYPE in $SUB_AREA_SHP_TYPES; do
   # Populate database table from multiple shapefiles from sub areas.
   docker_exec postgres "for SUB_AREA in ${SUB_AREAS}; do $SHP2PGSQL -a /tmp/shp/\${SUB_AREA}/${SUB_AREA_SHP_TYPE}.shp $TABLE_NAME | exec $PSQL -v ON_ERROR_STOP=1; done"
 done
-
-# Import "add_links" and "remove_links" layers from GeoPackage fixup file if it exists.
-if [ -f "$CWD"/fixup/digiroad/fixup.gpkg ]; then
-  OGR2OGR="exec ogr2ogr -f PostgreSQL $OGR2OGR_PG_REF /tmp/gpkg/fixup.gpkg"
-
-  docker_exec postgres "$OGR2OGR -nln fix_layer_link add_links"
-  docker_exec postgres "$OGR2OGR -nln fix_layer_link_exclusion_geometry remove_links"
-  docker_exec postgres "$OGR2OGR -nln fix_layer_stop_point add_stop_points"
-fi
-
-# Load DR_PYSAKKI shapefile into database.
-docker_exec postgres "$SHP2PGSQL -c /tmp/shp/DR_PYSAKKI.shp ${DB_SCHEMA_NAME_DIGIROAD}.dr_pysakki | exec $PSQL -v ON_ERROR_STOP=1"
-
-# Process road geometries and filtering properties in database.
-docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_linkki.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
-
-# Process stops and filter properties in database.
-docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_pysakki.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
-
-# Create SQL views combining Digiroad links and public transport stops with fixup layers from GeoPackage file.
-docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/apply_fixup_layer.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
-
-# Import HSL tram infrastructure links. These are loaded separately from Digiroad
-# links so that the GeoPackage fixup layer applies to Digiroad (bus) links only.
-# `pgcrypto` provides `gen_random_uuid()` referenced by the staging table.
-docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto;'"
-docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f $TRAM_INFRALINKS_SQL_DOCKER"
-
-# Transform tram links into the Digiroad schema (reproject to EPSG:3067).
-docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_tram_links.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
-
-# Process turn restrictions and filter properties in database.
-docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/transform_dr_kaantymisrajoitus.sql -v schema=$DB_SCHEMA_NAME_DIGIROAD"
-
-# Create separate schema for exporting data in MBTiles format.
-docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/create_mbtiles_schema.sql -v source_schema=$DB_SCHEMA_NAME_DIGIROAD -v schema=$DB_SCHEMA_NAME_MBTILES"
 
 # Stop Docker container.
 docker_stop
