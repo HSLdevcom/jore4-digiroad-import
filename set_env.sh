@@ -13,6 +13,11 @@ fi
 # shapefile encoding
 export SHP_ENCODING="UTF-8"
 
+
+# Define a Docker Compose project name to distinguish
+# the docker environment of this project from others
+export COMPOSE_PROJECT_NAME=jore3-importer
+
 export DOCKER_IMAGE="jore4/postgis-digiroad"
 export DOCKER_CONTAINER_NAME="jore4-postgis-digiroad"
 export DOCKER_CONTAINER_PORT="21000"
@@ -102,14 +107,37 @@ docker_start() {
 
   # Only start if not already running (safe to call repeatedly).
   if ! docker container inspect -f '{{.State.Running}}' "$DOCKER_CONTAINER_NAME" 2>/dev/null | grep -q '^true$'; then
-    docker start "$DOCKER_CONTAINER_NAME"
+    docker_start_service "$DOCKER_CONTAINER_NAME"
   fi
 
   docker_pg_wait
 }
 
+docker_stop_service() {
+  docker stop "$1" 2>/dev/null || echo "Container $1 is not running or does not exist."
+}
+
+docker_start_service() {
+  docker start "$1"
+}
+
 docker_stop() {
-  docker stop "$DOCKER_CONTAINER_NAME"
+  docker_stop_service "$DOCKER_CONTAINER_NAME"
+}
+
+# Usage: ask VAR PROMPT [DEFAULT] [VALUE_WITH_DEFAULTS]. Skips the prompt when WITH_DEFAULTS=true.
+ask() {
+  local var="$1" prompt="$2" default="${3:-}"
+  local auto="${4-$default}"
+  local answer=""
+  if [[ "${WITH_DEFAULTS:-false}" == true ]]; then
+    answer="$auto"
+    echo "${prompt}${answer}"
+  else
+    read -r -p "$prompt" answer
+    answer="${answer:-$default}"
+  fi
+  printf -v "$var" '%s' "$answer"
 }
 
 print_and_run_cmd() {
@@ -120,5 +148,6 @@ print_and_run_cmd() {
 docker_exec() {
   local USER="$1"
   shift
-  print_and_run_cmd docker exec -u "$USER" "$DOCKER_CONTAINER_NAME" sh -c "$@"
+  # bash (not dash) is needed for pipefail, so that failures inside pipelines propagate out.
+  print_and_run_cmd docker exec -u "$USER" "$DOCKER_CONTAINER_NAME" bash -c "set -eo pipefail; $*"
 }

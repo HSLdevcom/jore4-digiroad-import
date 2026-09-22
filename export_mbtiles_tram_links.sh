@@ -25,7 +25,6 @@ if [[ ! "$MML_TRAM_IMPORT_DATE" =~ ^20[2-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-
   exit 1
 fi
 
-TRAM_SQL_FILE="tram_infraLinks_${MML_TRAM_IMPORT_DATE}.sql"
 MBTILES_MAX_ZOOM_LEVEL=18
 MBTILES_LAYER_NAME=$DB_TABLE_NAME
 MBTILES_DESCRIPTION="Tram track links"
@@ -38,28 +37,13 @@ print_and_run_cmd mkdir -p "$GEOJSON_OUTPUT_DIR"
 print_and_run_cmd mkdir -p "$SQL_INPUT_DIR"
 print_and_run_cmd mkdir -p "${WORK_DIR}/shp"
 
-OUTPUT_FILE_BASENAME="${DB_TABLE_NAME}_${MML_TRAM_IMPORT_DATE}_$(date "+%Y-%m-%d")"
+OUTPUT_FILE_BASENAME="${DB_TABLE_NAME}_${MML_TRAM_IMPORT_DATE}_zoom-${MBTILES_MAX_ZOOM_LEVEL}_$(date "+%Y-%m-%d")"
 
 GEOJSON_OUTPUT_FILE="${OUTPUT_FILE_BASENAME}.geojson"
 MBTILES_OUTPUT_FILE="${OUTPUT_FILE_BASENAME}.mbtiles"
 
-if [ ! -f "${SQL_INPUT_DIR}/${TRAM_SQL_FILE}" ]; then
-  if [ ! -f "/tmp/${TRAM_SQL_FILE}" ]; then
-    echo "Expected SQL file for processing tram links does not exist: /tmp/${TRAM_SQL_FILE}"
-    exit 1
-  fi
-  print_and_run_cmd mv "/tmp/${TRAM_SQL_FILE}" "${SQL_INPUT_DIR}/${TRAM_SQL_FILE}"
-else
-  echo "Using existing file: ${SQL_INPUT_DIR}/${TRAM_SQL_FILE}"
-fi
-
+# Start Docker container. The container is expected to exist and contain required database table to be exported.
 print_and_run_cmd docker_start
-
-# install pgcrypto extension for generating UUIDs
-time docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto;'"
-
-# import tram infra links
-time print_and_run_cmd docker_exec postgres "exec $PSQL -v ON_ERROR_STOP=1 -f /tmp/sql/${TRAM_SQL_FILE}"
 
 # Export filtered links directly from PostGIS to GeoJSON.
 rm -f "${GEOJSON_OUTPUT_DIR}/$GEOJSON_OUTPUT_FILE"

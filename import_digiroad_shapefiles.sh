@@ -49,18 +49,26 @@ SUB_AREAS="ITA-UUSIMAA UUSIMAA_1 UUSIMAA_2"
 SHP_FILE_DIR="${WORK_DIR}/shp/${AREA}"
 
 for SUB_AREA in $SUB_AREAS; do
-  mkdir -p "${SHP_FILE_DIR}/${SUB_AREA}"
-  # Extract all shapefiles within sub-area.
-  unzip -u "$DOWNLOAD_TARGET_FILE" "$SUB_AREA"/* -d "$SHP_FILE_DIR"
+  if [[ ! -d "${SHP_FILE_DIR}/${SUB_AREA}" ]]; then
+    mkdir -p "${SHP_FILE_DIR}/${SUB_AREA}"
+  fi
+  if [[ ! -f "${SHP_FILE_DIR}/${SUB_AREA}/DR_LINKKI.shp" ]]; then
+    # Extract all shapefiles within sub-area.
+    unzip -u "$DOWNLOAD_TARGET_FILE" "$SUB_AREA"/* -d "$SHP_FILE_DIR"
+  fi
 done
 
 # Extract shapefile for public transport stops (common to all sub-areas of Uusimaa).
-unzip -u "$DOWNLOAD_TARGET_FILE" PYSAKIT/PYSAKIT.zip -d "${DOWNLOAD_TARGET_DIR}/${AREA}"
-unzip -u "${DOWNLOAD_TARGET_DIR}/${AREA}/PYSAKIT/PYSAKIT.zip" -d "$SHP_FILE_DIR"
-rm -fr "${DOWNLOAD_TARGET_DIR:?}/${AREA}"
+if [[ ! -f "${SHP_FILE_DIR}/DR_PYSAKKI.shp" ]]; then
+  unzip -u "$DOWNLOAD_TARGET_FILE" PYSAKIT/PYSAKIT.zip -d "${DOWNLOAD_TARGET_DIR}/${AREA}"
+  unzip -u "${DOWNLOAD_TARGET_DIR}/${AREA}/PYSAKIT/PYSAKIT.zip" -d "$SHP_FILE_DIR"
+  rm -fr "${DOWNLOAD_TARGET_DIR:?}/${AREA}"
+fi
 
 # Extract general Digiroad documents.
-unzip -u "$DOWNLOAD_TARGET_FILE" Dokumentit/* -d "$DOWNLOAD_TARGET_DIR"
+if [[ ! -f "${DOWNLOAD_TARGET_DIR}/Dokumentit/Irrotusalueet_ja_kunnat.xlsx" ]]; then
+  unzip -u "$DOWNLOAD_TARGET_FILE" Dokumentit/* -d "$DOWNLOAD_TARGET_DIR"
+fi
 
 # Remove possibly running/existing Docker container.
 docker_kill

@@ -35,6 +35,7 @@ jobs:
       - name: Import Digiroad shapefiles
         run: |
           ${{ github.workspace }}/import_digiroad_shapefiles.sh
+          ${{ github.workspace }}/import_tram_links.sh 2026-08-04
           ${{ github.workspace }}/export_mbtiles_tram_links.sh 2026-08-04
           ${{ github.workspace }}/apply_fixup_layer_and_process_links.sh
           ${{ github.workspace }}/export_routing_schema.sh 2026-08-04

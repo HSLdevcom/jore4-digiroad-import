@@ -31,16 +31,22 @@ INSERT INTO infrastructure_network.infrastructure_link
         direction = excluded.direction,
         estimated_length_in_metres = excluded.estimated_length_in_metres;
 
--- inserting data to mark all links to be safely traversable by busses
+-- inserting data to mark all links to be safely traversable by respective vehicle submodes
 INSERT INTO infrastructure_network.vehicle_submode_on_infrastructure_link
     (infrastructure_link_id, vehicle_submode)
     SELECT
         infrastructure_link_id,
-        'generic_bus'
-    FROM infrastructure_network.infrastructure_link_tmp
-    JOIN infrastructure_network.infrastructure_link
-        ON infrastructure_network.infrastructure_link.external_link_id = infrastructure_network.infrastructure_link_tmp.external_link_id
-        AND infrastructure_network.infrastructure_link.external_link_source = infrastructure_network.infrastructure_link_tmp.external_link_source
+        CASE il.external_link_source
+            WHEN 'digiroad_r_mml' THEN 'generic_bus'
+            WHEN 'digiroad_r_supplementary' THEN 'generic_bus'
+            WHEN 'hsl_fixup' THEN 'generic_bus'
+            WHEN 'hsl_tram' THEN 'generic_tram'
+            WHEN 'temp_hsl_tram' THEN 'generic_tram'
+        END
+    FROM infrastructure_network.infrastructure_link_tmp il_t
+    JOIN infrastructure_network.infrastructure_link il
+        ON il.external_link_id = il_t.external_link_id
+        AND il.external_link_source = il_t.external_link_source
     ON CONFLICT (infrastructure_link_id, vehicle_submode) DO NOTHING;
 
 -- dropping temporary table
