@@ -153,12 +153,12 @@ If you have made changes to the _JORE4 fix layer_ by altering the table metadata
 
     The sql containing the infra links, insertable to the database, can be found in ```/tmp/tram_infraLinks_<date>.sql```. Leave it there or copy to ```sql/```.
 
-7. run ```export_mbtiles_tram_links.sh``` with the MML_TRAM_IMPORT_DATE date the tram link material was obtained on:
+7. run ```import_tram_links.sh``` with the MML_TRAM_IMPORT_DATE date the tram link material was obtained on:
 ```sh
-  ./export_mbtiles_tram_links.sh <mml_date>
+  ./import_tram_links.sh <mml_date>
 ```
 
-8. upload the ```sql/tram_infralinks_<date>.sql``` and ```workdir/mbtiles/tram_links_<MML_TRAM_IMPORT_DATE>_<today>.mbtiles``` to blob storage ```stjore4dev001 / jore4-ui```
+8. upload the ```sql/tram_infralinks_<date>.sql``` to blob storage ```stjore4dev001 / jore4-ui```.
 
 ## Finalizing import
 
@@ -231,8 +231,8 @@ The table below describes the contents of each toc file generated.
 | ToC file                                                                                                    | Description                              |
 | ----------------------------------------------------------------------------------------------------------- | -----------------------------------------|
 | `<date>_create_routing_schema_digiroad_r_<digiroad_release>_mml_<mml_date>.pgdump.list`                     | Contains entire routing schema and data. |
-| `<date>_create_routing_schema_digiroad_r_<digiroad_release>_mml_<mml_date>.no-enums.links-and-stops.list`   | No schema item definitions at all. Contains table data for infrastructure links, topology and public transport stops. Does not include data for enum tables which is already included in the database migration scripts of the map-matching backend. |
-| `<date>_create_routing_schema_digiroad_r_<digiroad_release>_mml_<mml_date>.pgdump.no-enums.only-links.list` | No schema item definitions at all. Contains table data for infrastructure links and topology. Does not include public transport stops. Does not include data for enum tables which is already included in the database migration scripts of the map-matching backend. |
+| `<date>_create_routing_schema_digiroad_r_<digiroad_release>_mml_<mml_date>.no-enums.links-and-stops.list`   | No schema item definitions at all. Contains table data for `infrastructure_source`, infrastructure links, topology and public transport stops. Other enum tables are excluded. The target data for these tables must be cleared before restore. |
+| `<date>_create_routing_schema_digiroad_r_<digiroad_release>_mml_<mml_date>.pgdump.no-enums.only-links.list` | No schema item definitions at all. Contains table data for `infrastructure_source`, infrastructure links and topology. Does not include public transport stops. Other enum tables are excluded. The target data for these tables must be cleared before restore. |
 
 Which one should be used will depend on what deployment strategy with regard to
 database migrations and data population is currently chosen in the map-matching
@@ -251,21 +251,29 @@ To export a CSV containing intrastructure network links' data, run:
 
 You may import this CSV data into an existing database adhering to JORE4 schema,
 using the command below. Note that `infrastructure_network.infrastructure_link`
-table (and schema) has to exist in the target database. Also note that the
-importer user must have read-write permissions to this table.
+table (and schema) has to exist in the target database if only updating. for
+clean import, databases' tables will be dropped and recreated. Also note that
+the importer user must have read-write permissions to the database.
 
 The script will interactively ask for the connection parameters of the target
 database. They default to the parameters defined in the `jore4-tools` repository
 for the `jore4e2e` database. You may set up the `jore4e2e` database locally with
 the `./start_dependencies.sh` script.
 
-Note: This script is currently only a proof of concept. It will create new links
-if they didn't exist or update them if they do. But links deleted in digiroad
-won't be deleted here.
+```sh
+./import_infra_network_csv.sh <mml_date>
+```
+
+After importing, several repos depend on an infraLinks.sql file to contain the
+infrastructure links. To create that file, run:
 
 ```sh
-./import_infra_network_csv.sh
+./create_infralinks_sql.sh <mml_date>
 ```
+
+The file will be named `infraLinks_digiroad_r_<digiroad release>_mml_<mml_date>.sql`.
+Updload that file to azure blobl storage `stjore4dev001 / jore4-ui` and update
+dependant repos.
 
 ## Exporting stops for JORE3 Importer
 
@@ -297,6 +305,15 @@ exported with (assuming Digiroad shapefiles have already been imported):
 ```sh
 ./export_mbtiles_dr_pysakki.sh
 ```
+
+An MBTiles files containing filtered tram links can be exported with
+(assuming MML tram infrastructure links have already been imported):
+
+```sh
+./export_mbtiles_tram_links.sh <MML_TRAM_IMPORT_DATE>
+```
+
+Copy the ```workdir/mbtiles/tram_links_<MML_TRAM_IMPORT_DATE>_zoom-<ZOOM_LEVEL>_<today>.mbtiles``` file to blob storage ```stjore4dev001 / jore4-ui```.
 
 ## License
 

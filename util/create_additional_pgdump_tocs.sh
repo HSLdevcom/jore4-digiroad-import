@@ -14,7 +14,8 @@ set -euxo pipefail
 # When passing this toc file as an argument to `pg_restore` command, only data
 # is restored (no table definitions). Data for enumeration tables is excluded
 # because those are already included in the database migration scripts of the
-# map-matching backend. Public transport stops are also excluded.
+# map-matching backend, except infrastructure_source, which is needed by the
+# restored infrastructure links. Public transport stops are also excluded.
 PGDUMP_TOC_ONLY_LINKS_NO_ENUMS="${PGDUMP_FILE}.no-enums.only-links.list"
 
 grep -F "TABLE DATA routing infrastructure_source " "$PGDUMP_TOC" > "$PGDUMP_TOC_ONLY_LINKS_NO_ENUMS"
@@ -26,7 +27,8 @@ grep -F "SEQUENCE SET routing infrastructure_link_vertices_pgr_id_seq " "$PGDUMP
 # When passing this toc file as an argument to `pg_restore` command, only data
 # is restored (no table definitions). Data for enumeration tables is excluded
 # because those are already included in the database migration scripts of the
-# map-matching backend.
+# map-matching backend, except infrastructure_source, which is needed by the
+# restored infrastructure links and public transport stops.
 PGDUMP_TOC_NO_ENUMS="${PGDUMP_FILE}.no-enums.links-and-stops.list"
 
 cp "$PGDUMP_TOC_ONLY_LINKS_NO_ENUMS" "$PGDUMP_TOC_NO_ENUMS"
