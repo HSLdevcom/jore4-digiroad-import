@@ -1,0 +1,7 @@
+deb [check-valid-until=no] http://archive.debian.org/debian bullseye main
+
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1147093
+# Debian efd up, and forgot to move the security repository into archive before deleting it.
+
+deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20260831T235959Z/ bullseye-security main
+deb [check-valid-until=no] http://archive.debian.org/debian bullseye-updates main
