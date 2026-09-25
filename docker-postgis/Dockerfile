@@ -1,6 +1,10 @@
-FROM postgis/postgis:15-master
+FROM docker.io/postgres:15-bullseye AS postgis
 
 ENV TZ=Europe/Helsinki
+
+# Switch to Debian Archive for EOL disto version
+RUN rm /etc/apt/sources.list
+ADD archive.sources.list /etc/apt/sources.list
 
 # Install GDAL command line utilities (e.g. ogr2ogr).
 RUN set -ex \
