@@ -8,8 +8,8 @@ source "$(dirname "$0")/set_env.sh"
 
 AREA="UUSIMAA"
 
-SHP_URL="https://aineistot.vayla.fi/?path=ava/Tie/Digiroad/Aineistojulkaisut/latest/Maakuntajako_digiroad_R/${AREA}.zip"
-IRROTUS_NRO_URL="https://aineistot.vayla.fi/?path=ava/Tie/Digiroad/Aineistojulkaisut/latest/irrotus_nro.txt"
+SHP_URL="https://aineistot.vayla.fi/?path=ava/Tie/Digiroad/Aineistojulkaisut/2026_01/Maakuntajako_digiroad_R/${AREA}.zip"
+IRROTUS_NRO_URL="https://aineistot.vayla.fi/?path=ava/Tie/Digiroad/Aineistojulkaisut/2026_01/irrotus_nro.txt"
 
 DOWNLOAD_TARGET_DIR="${WORK_DIR}/zip"
 DOWNLOAD_TARGET_FILE="${DOWNLOAD_TARGET_DIR}/${AREA}_R.zip"
