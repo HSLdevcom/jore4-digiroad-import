@@ -143,7 +143,10 @@ CREATE INDEX fix_layer_stop_point_geom_idx ON :schema.fix_layer_stop_point USING
 -- primary key of GeoPackage layer (`fid`). A separate ID value space is forced
 -- by adding 1_000_000_000.
 UPDATE :schema.fix_layer_stop_point SET internal_id = 1000000000 + fid;
-ALTER TABLE :schema.fix_layer_stop_point ALTER COLUMN internal_id SET NOT NULL;
+ALTER TABLE :schema.fix_layer_stop_point
+    ALTER COLUMN internal_id SET NOT NULL,
+    ALTER COLUMN pys_tyyppi SET DEFAULT '2',
+    ALTER COLUMN pys_tyyppi SET NOT NULL;
 
 -- Compute value for `link_id` attribute in case it is not present or does not
 -- reference an existing infrastructure link. Then `link_id` is resolved as the
@@ -229,6 +232,7 @@ SELECT
     p.kuntakoodi,
     nimi_su,
     nimi_ru,
+    p.pys_tyyppi,
     'digiroad_r'::text AS hsl_infra_source,
     p.geom
 FROM :schema.dr_pysakki p
@@ -255,6 +259,7 @@ SELECT
     s.kuntakoodi,
     nimi_su,
     nimi_ru,
+    s.pys_tyyppi,
     'hsl_fixup'::text AS hsl_infra_source,
     s.geom
 FROM :schema.fix_layer_stop_point s

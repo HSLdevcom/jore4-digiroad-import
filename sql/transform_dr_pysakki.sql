@@ -12,6 +12,7 @@ ALTER TABLE :schema.dr_pysakki_out
     ALTER COLUMN vaik_suunt TYPE int,
     ALTER COLUMN nimi_su TYPE text,
     ALTER COLUMN nimi_ru TYPE text,
+    ALTER COLUMN pys_tyyppi TYPE text,
     ALTER COLUMN yllapitaja TYPE int,
     ALTER COLUMN yllap_tunn TYPE text,
     ALTER COLUMN matk_tunn TYPE text,
@@ -47,6 +48,7 @@ ALTER TABLE :schema.dr_pysakki
     ALTER COLUMN koord_y SET NOT NULL,
     ALTER COLUMN sijainti_m SET NOT NULL,
     ALTER COLUMN vaik_suunt SET NOT NULL,
+    ALTER COLUMN pys_tyyppi SET NOT NULL,
     ALTER COLUMN geom SET NOT NULL,
 
     ADD CONSTRAINT dr_pysakki_pkey PRIMARY KEY (id),
