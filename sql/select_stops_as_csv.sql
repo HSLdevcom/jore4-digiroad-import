@@ -10,6 +10,7 @@ COPY (
         ST_AsGeoJSON(ST_Transform(source.geom, 4326))::jsonb as location,
         source.nimi_su as finnish_name,
         source.nimi_ru as swedish_name,
+        source.pys_tyyppi as pys_tyyppi,
         source.hsl_infra_source as external_stop_source
     FROM :schema.dr_pysakki_fixup source
 ) TO STDOUT WITH (FORMAT CSV, DELIMITER ';', HEADER)
