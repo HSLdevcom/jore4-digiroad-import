@@ -1,4 +1,4 @@
-FROM docker.io/postgres:15-bullseye AS postgis
+FROM docker.io/postgres:17-bullseye AS postgis
 
 ENV TZ=Europe/Helsinki
 
