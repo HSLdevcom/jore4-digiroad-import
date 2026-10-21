@@ -1,83 +1,24 @@
-FROM docker.io/postgres:15-bullseye AS postgis
+FROM crjore4prod001.azurecr.io/jore4-postgres:18.6 AS postgres
 
 ENV TZ=Europe/Helsinki
-
-# Switch to Debian Archive for EOL disto version
-RUN rm /etc/apt/sources.list /etc/apt/sources.list.d/pgdg.list
-ADD archive.sources.list /etc/apt/sources.list
-
-# Install PostGIS (incl. shp2pgsql/pgsql2shp from the `postgis` package) and
-# GDAL command line utilities (e.g. ogr2ogr).
-RUN set -ex \
- && apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates \
- && printf '%s\n' 'deb [signed-by=/usr/local/share/keyrings/postgres.gpg.asc] https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg main' > /etc/apt/sources.list.d/pgdg.list \
- && apt-get update \
- && apt-get install -y --no-install-recommends \
-    gdal-bin \
-    postgis \
-    postgresql-${PG_MAJOR}-postgis-3 \
-    postgresql-${PG_MAJOR}-postgis-3-scripts \
- && rm -rf /var/lib/apt/lists/*
-
-ENV \
- PGROUTING_VERSION=3.5.0 \
- PGROUTING_SHA256=ce3a591d57466d64420923b6ac4df10ad27cac9f5e21f18eed66afe4543dfb48
-
-# Build and install pgRouting from source.
-RUN set -ex \
- && apt-get update \
- && apt-get install -y --no-install-recommends \
-    build-essential \
-    ca-certificates \
-    cmake \
-    libboost-graph1.74.0 \
-    libboost-graph1.74-dev \
-    libcgal-dev \
-    postgresql-server-dev-${PG_MAJOR} \
-    wget \
- && wget -O pgrouting.tar.gz "https://github.com/pgRouting/pgrouting/archive/v${PGROUTING_VERSION}.tar.gz" \
- && echo "$PGROUTING_SHA256 *pgrouting.tar.gz" | sha256sum -c - \
- && mkdir -p /usr/src/pgrouting \
- && tar \
-  --extract \
-  --file pgrouting.tar.gz \
-  --directory /usr/src/pgrouting \
-  --strip-components 1 \
- && rm pgrouting.tar.gz \
- && cd /usr/src/pgrouting \
- && mkdir build \
- && cd build \
- && cmake .. \
- && make \
- && make install \
- && cd / \
- && rm -rf /usr/src/pgrouting \
- && apt-get purge -y --autoremove \
-    build-essential \
-    cmake \
-    libboost-graph1.74.0 \
-    libboost-graph1.74-dev \
-    libcgal-dev \
-    postgresql-server-dev-${PG_MAJOR} \
-    wget \
- && apt-get clean -y \
- && rm -rf /var/lib/apt/lists/*
-
 ENV \
  TIPPECANOE_VERSION=1.36.0 \
  TIPPECANOE_SHA256=0e385d1244a0d836019f64039ea6a34463c3c2f49af35d02c3bf241aec41e71b
+
+# Install postgis tools & gdal-bin from the Debian repository.
+RUN set -ex \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends postgis gdal-bin \
+ && rm -rf /var/lib/apt/lists/*
 
 # Build and install tippecanoe from source.
 RUN set -ex \
  && apt-get update \
  && apt-get install -y --no-install-recommends \
     build-essential \
-    ca-certificates \
     libsqlite3-dev \
-    wget \
     zlib1g-dev \
- && wget -O tippecanoe.tar.gz "https://github.com/mapbox/tippecanoe/archive/refs/tags/${TIPPECANOE_VERSION}.tar.gz" \
+ && curl -Lo tippecanoe.tar.gz "https://github.com/mapbox/tippecanoe/archive/refs/tags/${TIPPECANOE_VERSION}.tar.gz" \
  && echo "$TIPPECANOE_SHA256 *tippecanoe.tar.gz" | sha256sum -c - \
  && mkdir -p /usr/src/tippecanoe \
  && tar \
@@ -87,14 +28,13 @@ RUN set -ex \
   --strip-components 1 \
  && rm tippecanoe.tar.gz \
  && cd /usr/src/tippecanoe \
- && make \
+ && make -j $(nproc --all) \
  && make install \
  && cd / \
  && rm -rf /usr/src/tippecanoe \
  && apt-get purge -y --autoremove \
     build-essential \
     libsqlite3-dev \
-    wget \
     zlib1g-dev \
  && apt-get clean -y \
  && rm -rf /var/lib/apt/lists/*
