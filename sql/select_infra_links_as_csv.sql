@@ -28,7 +28,7 @@ COPY (
         -- 13, -- Huoltoaukko moottoritiellä
         -- 14, -- Erikoiskuljetusyhteys ilman puomia
         -- 15, -- Erikoiskuljetusyhteys puomilla
-           21, -- Lossi
+        -- 21, -- Lossi / Lautta
            99  -- Ei tietoa (esiintyy vain rakenteilla olevilla tielinkeillä)
         )
     UNION ALL

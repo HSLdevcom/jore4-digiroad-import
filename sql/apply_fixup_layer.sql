@@ -75,7 +75,7 @@ SELECT
         WHEN link_mmlid IS NOT NULL THEN 'digiroad_r_mml'::text
         ELSE 'digiroad_r_supplementary'::text
     END AS hsl_infra_source,
-    true AS is_generic_bus,
+    linkkityyp <> 21 AS is_generic_bus,
     -- TODO: Assign "tall electric bus" vehicle type based on greatest allowed height property.
     false AS is_tall_electric_bus,
     false AS is_tram,
