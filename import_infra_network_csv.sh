@@ -61,7 +61,7 @@ if [[ "$TRUNCATE_ALL_DATABASES" =~ ^[Yy]$ ]]; then
 
   echo "Restarting mapmatching..."
   docker_start_service mapmatching
-  while ! curl --fail http://localhost:3010/actuator/health --silent | grep --fixed-strings --quiet '{"status":"UP"}'
+  while ! curl --fail http://localhost:3010/actuator/health --silent | grep --fixed-strings --quiet '"status":"UP"'
   do
     echo "waiting for tiamat db migrations to execute"
     sleep 2;
@@ -93,7 +93,7 @@ if [[ "$TRUNCATE_ALL_DATABASES" =~ ^[Yy]$ ]]; then
 
   echo "Restarting tiamat..."
   docker_start_service tiamat
-  while ! curl --fail http://localhost:3010/actuator/health --silent | grep --fixed-strings --quiet '{"status":"UP"}'
+  while ! curl --fail http://localhost:3010/actuator/health --silent | grep --fixed-strings --quiet '"status":"UP"'
   do
     echo "waiting for tiamat db migrations to execute"
     sleep 2;

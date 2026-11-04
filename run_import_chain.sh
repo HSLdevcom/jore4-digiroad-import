@@ -3,7 +3,22 @@
 # Stop on first error. Have meaningful error messages.
 set -euo pipefail
 
-MML_DATE=2026-08-04
+usage() {
+  echo "Usage: $(basename "$0") <MML_DATE>"
+  echo "  MML_DATE must be in format YYYY-MM-DD"
+}
+
+if [[ "${1:-}" == "" ]]; then
+  usage
+  exit 1
+fi
+
+MML_DATE="$1"
+if [[ ! "$MML_DATE" =~ ^20[2-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$ ]]; then
+  echo "Invalid date: $MML_DATE"
+  usage
+  exit 1
+fi
 
 echo "Running import chain for MML_DATE=$MML_DATE"
 echo
@@ -81,6 +96,12 @@ echo "              export_stops_csv.sh"
 echo
 echo "**************************************************************"
 ./export_stops_csv.sh
+
+echo
+echo
+echo "Not exporting mbtiles. Exiting."
+echo
+exit
 
 echo
 echo
