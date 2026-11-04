@@ -65,6 +65,15 @@ echo
 echo
 echo "**************************************************************"
 echo
+echo "              import_routing_data_to_mapmatchingdb.sh"
+echo
+echo "**************************************************************"
+./import_routing_data_to_mapmatchingdb.sh `date "+%Y-%m-%d"` "$MML_DATE" --with-defaults
+
+echo
+echo
+echo "**************************************************************"
+echo
 echo "              export_infra_network_csv.sh"
 echo
 echo "**************************************************************"
